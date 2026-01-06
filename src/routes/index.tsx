@@ -27,7 +27,7 @@ function HomePage() {
   const selectedIds = useMemo(() => Array.from(selectedCalendarIds), [selectedCalendarIds])
 
   // Use cached events - fetches all calendars, filters client-side (instant toggle!)
-  const { events, isLoading, error } = useCachedEvents({
+  const { events, error } = useCachedEvents({
     year,
     allCalendarIds,
     selectedCalendarIds: selectedIds,
@@ -96,22 +96,6 @@ function HomePage() {
           <h2 className='text-xl font-semibold mb-3'>No Calendars Selected</h2>
 
           <p className='text-muted-foreground'>Select one or more calendars from the sidebar to view events.</p>
-        </div>
-      </div>
-    )
-  }
-
-  // Show loading overlay only when we have no cached events
-  if (isLoading && events.length === 0) {
-    return (
-      <div className='relative'>
-        <YearView year={year} events={[]} />
-
-        <div className='absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center'>
-          <div className='text-center'>
-            <div className='w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4' />
-            <p className='text-muted-foreground'>Loading events for {year}...</p>
-          </div>
         </div>
       </div>
     )

@@ -13,16 +13,13 @@ export function DayCell({ day, size, hasTentativeEvent, birthdayEvents = [] }: D
   const jsDay = day.date.getDay()
   const isWeekend = jsDay === 0 || jsDay === 6
 
-  const baseClasses = 'flex items-start justify-between p-1 font-medium transition-colors border hover:bg-stone-50'
+  const baseClasses = 'flex items-start justify-between p-1 font-medium transition-colors border border-stone-200 hover:bg-stone-50'
   const bgClass = hasTentativeEvent ? 'bg-amber-50' : isWeekend ? 'bg-stone-50' : 'bg-white'
-  const borderClass = 'border-stone-200'
   const textClass = day.isToday ? '' : 'text-stone-400'
-
-  // Scale font size based on cell size
   const fontSize = size >= 80 ? 'text-sm' : size >= 60 ? 'text-xs' : 'text-[10px]'
 
   return (
-    <div className={`${baseClasses} ${bgClass} ${borderClass} ${textClass} ${fontSize}`} style={{ width: size, height: size }}>
+    <div className={`${baseClasses} ${bgClass} ${textClass} ${fontSize}`} style={{ width: size, height: size }}>
       {day.isToday ? (
         <span className='bg-blue-600 text-white rounded-full px-1.5 py-0.5 text-xs font-medium leading-none'>{day.dayOfMonth}</span>
       ) : (
