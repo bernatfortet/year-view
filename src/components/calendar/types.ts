@@ -40,6 +40,7 @@ export interface YearViewProps {
   year: number
   events: CalendarEvent[]
   onYearChange?: (year: number) => void
+  daySize?: number
 }
 
 /**
@@ -49,6 +50,7 @@ export interface MonthGridProps {
   year: number
   month: number // 0-11
   events: CalendarEvent[]
+  daySize: number
 }
 
 /**
@@ -56,6 +58,7 @@ export interface MonthGridProps {
  */
 export interface DayCellProps {
   day: CalendarDay
+  size: number
 }
 
 /**
