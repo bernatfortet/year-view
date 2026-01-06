@@ -27,7 +27,7 @@ function HomePage() {
   const selectedIds = useMemo(() => Array.from(selectedCalendarIds), [selectedCalendarIds])
 
   // Use cached events - fetches all calendars, filters client-side (instant toggle!)
-  const { events, isLoading, isSyncing, error } = useCachedEvents({
+  const { events, isLoading, error } = useCachedEvents({
     year,
     allCalendarIds,
     selectedCalendarIds: selectedIds,
@@ -153,14 +153,6 @@ function HomePage() {
       <YearView year={year} events={events} />
 
       <HelpButton />
-
-      {/* Subtle sync indicator when fetching fresh data */}
-      {isSyncing && (
-        <div className='fixed bottom-4 right-4 flex items-center gap-2 px-3 py-2 bg-muted/90 backdrop-blur-sm rounded-full shadow-lg text-sm text-muted-foreground'>
-          <div className='w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin' />
-          <span>Syncing...</span>
-        </div>
-      )}
     </div>
   )
 }

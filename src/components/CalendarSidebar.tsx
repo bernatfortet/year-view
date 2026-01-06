@@ -1,5 +1,4 @@
-import { RefreshCwIcon, SettingsIcon, SlidersHorizontalIcon } from "lucide-react"
-
+import { RefreshCwIcon, SlidersHorizontalIcon } from "lucide-react"
 import { useStore } from "@nanostores/react"
 
 import { useAuth } from "@/context/AuthContext"
@@ -8,16 +7,6 @@ import { triggerEventsRefresh, $isSyncingEvents } from "@/stores/events.store"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Separator } from "@/components/ui/separator"
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar"
 import type { GoogleCalendar } from "@/routes/api/calendar/list"
 
 interface CalendarsByAccount {
@@ -36,91 +25,72 @@ export function CalendarSidebar() {
     refreshCalendars,
   } = useCalendars()
 
-  // Track global sync state for the refresh button
   const isSyncing = useStore($isSyncingEvents)
 
-  // Group calendars by account (owner email)
   const calendarsByAccount: CalendarsByAccount[] = user?.email
     ? [{ email: user.email, calendars }]
     : []
 
-  const handleRefresh = () => {
+  function handleRefresh() {
     refreshCalendars()
     triggerEventsRefresh()
   }
 
   return (
-    <Sidebar collapsible="offcanvas" className="border-r border-sidebar-border bg-background">
+    <div className="flex h-full flex-col">
       {/* Header */}
-      <SidebarHeader className="px-4 py-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-sidebar-foreground">Calendars</h2>
+      <div className="flex items-center justify-between px-4 py-4">
+        <h2 className="text-lg font-semibold">Calendars</h2>
 
-          <div className="flex items-center gap-0.5">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleRefresh}
-              disabled={isSyncing || isLoadingCalendars}
-            >
-              <RefreshCwIcon className={isSyncing || isLoadingCalendars ? 'animate-spin' : ''} />
-              <span className="sr-only">Refresh</span>
-            </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleRefresh}
+          disabled={isSyncing || isLoadingCalendars}
+        >
+          <RefreshCwIcon className={isSyncing || isLoadingCalendars ? 'animate-spin' : ''} />
+          <span className="sr-only">Refresh</span>
+        </Button>
+      </div>
 
-            <Button variant="ghost" size="icon">
-              <SettingsIcon />
-              <span className="sr-only">Settings</span>
-            </Button>
-          </div>
-        </div>
-      </SidebarHeader>
-
-      <Separator className="bg-sidebar-border" />
+      <Separator />
 
       {/* Calendar List */}
-      <SidebarContent className="px-2 py-2">
+      <div className="flex-1 overflow-auto px-2 py-2">
         {!isAuthenticated ? (
-          <SidebarGroup>
-            <SidebarGroupContent className="p-4">
-              <p className="text-sm text-sidebar-foreground/70 mb-4">
-                Sign in to view your calendars
-              </p>
+          <div className="p-4">
+            <p className="text-sm text-muted-foreground mb-4">
+              Sign in to view your calendars
+            </p>
 
-              <Button onClick={signIn} className="w-full">
-                Sign in with Google
-              </Button>
-            </SidebarGroupContent>
-          </SidebarGroup>
+            <Button onClick={signIn} className="w-full">
+              Sign in with Google
+            </Button>
+          </div>
         ) : error ? (
-          <SidebarGroup>
-            <SidebarGroupContent className="p-4">
-              <p className="text-sm text-destructive">{error}</p>
+          <div className="p-4">
+            <p className="text-sm text-destructive">{error}</p>
 
-              <Button onClick={refreshCalendars} variant="outline" className="mt-2">
-                Try again
-              </Button>
-            </SidebarGroupContent>
-          </SidebarGroup>
+            <Button onClick={refreshCalendars} variant="outline" className="mt-2">
+              Try again
+            </Button>
+          </div>
         ) : isLoadingCalendars && calendars.length === 0 ? (
-          <SidebarGroup>
-            <SidebarGroupContent className="p-4">
-              <div className="space-y-3">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="flex items-center gap-3 animate-pulse">
-                    <div className="w-4 h-4 bg-sidebar-accent rounded" />
-                    <div className="h-4 bg-sidebar-accent rounded flex-1" />
-                    <div className="w-3 h-3 bg-sidebar-accent rounded-full" />
-                  </div>
-                ))}
+          <div className="p-4 space-y-3">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="flex items-center gap-3 animate-pulse">
+                <div className="w-4 h-4 bg-muted rounded" />
+                <div className="h-4 bg-muted rounded flex-1" />
+                <div className="w-3 h-3 bg-muted rounded-full" />
               </div>
-            </SidebarGroupContent>
-          </SidebarGroup>
+            ))}
+          </div>
         ) : (
           calendarsByAccount.map((account) => (
-            <SidebarGroup key={account.email}>
+            <div key={account.email} className="mb-4">
               {/* Account Header */}
               <div className="flex items-center justify-between px-2 py-2">
-                <span className="text-xs font-medium text-sidebar-foreground/70 uppercase tracking-wide">
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide truncate">
                   {account.email}
                 </span>
 
@@ -131,34 +101,30 @@ export function CalendarSidebar() {
               </div>
 
               {/* Calendar Items */}
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {account.calendars.map((calendar) => (
-                    <SidebarMenuItem key={calendar.id}>
-                      <CalendarItem
-                        calendar={calendar}
-                        isSelected={selectedCalendarIds.has(calendar.id)}
-                        onToggle={() => toggleCalendar(calendar.id)}
-                      />
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
+              <div className="space-y-0.5">
+                {account.calendars.map((calendar) => (
+                  <CalendarItem
+                    key={calendar.id}
+                    calendar={calendar}
+                    isSelected={selectedCalendarIds.has(calendar.id)}
+                    onToggle={() => toggleCalendar(calendar.id)}
+                  />
+                ))}
+              </div>
+            </div>
           ))
         )}
-
-      </SidebarContent>
+      </div>
 
       {/* Footer */}
       {isAuthenticated && (
-        <SidebarFooter className="p-4">
+        <div className="p-4 border-t">
           <Button variant="secondary" className="w-full" onClick={signOut}>
             Sign out
           </Button>
-        </SidebarFooter>
+        </div>
       )}
-    </Sidebar>
+    </div>
   )
 }
 
@@ -170,7 +136,7 @@ interface CalendarItemProps {
 
 function CalendarItem({ calendar, isSelected, onToggle }: CalendarItemProps) {
   return (
-    <label className="flex items-center gap-3 px-2 py-2 rounded-md cursor-pointer hover:bg-sidebar-accent transition-colors group">
+    <label className="flex items-center gap-3 px-2 py-2 rounded-md cursor-pointer hover:bg-muted transition-colors">
       <Checkbox
         checked={isSelected}
         onCheckedChange={onToggle}
@@ -181,7 +147,7 @@ function CalendarItem({ calendar, isSelected, onToggle }: CalendarItemProps) {
         }}
       />
 
-      <span className="flex-1 text-sm text-sidebar-foreground truncate">
+      <span className="flex-1 text-sm truncate">
         {calendar.summary}
       </span>
 

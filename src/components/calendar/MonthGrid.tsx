@@ -12,6 +12,9 @@ export function MonthGrid({ year, month, events, daySize }: MonthGridProps) {
   const monthName = getMonthName(month)
   const ref = useRef<HTMLDivElement>(null)
 
+  const today = new Date()
+  const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month
+
   useEffect(() => {
     const element = ref.current
     if (!element) return
@@ -42,7 +45,10 @@ export function MonthGrid({ year, month, events, daySize }: MonthGridProps) {
   return (
     <div ref={ref} data-month={month} className='flex items-center gap-12'>
       {/* Large Month Name - Left side */}
-      <div className='w-56 text-right text-stone-200 font-bold leading-none select-none' style={{ fontSize: '100px' }}>
+      <div
+        className={`w-56 text-right font-bold leading-none select-none ${isCurrentMonth ? 'text-stone-400' : 'text-stone-200'}`}
+        style={{ fontSize: '100px' }}
+      >
         {monthName}
       </div>
 

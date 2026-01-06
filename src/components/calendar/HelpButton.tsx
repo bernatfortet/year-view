@@ -1,6 +1,6 @@
-import { HelpCircle, CircleHelp, Gift, Sparkles, type LucideIcon } from 'lucide-react'
+import { HelpCircle, CircleHelp, Gift, type LucideIcon, SparklesIcon } from 'lucide-react'
 
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { useState } from 'react'
 
 export function HelpButton() {
@@ -19,8 +19,10 @@ export function HelpButton() {
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side='right' className='w-80'>
           <SheetHeader>
-            <SheetTitle>Quick Reference</SheetTitle>
-            <SheetDescription>Special event behaviors in Year View</SheetDescription>
+            <SheetTitle className='flex items-center gap-2'>
+              <SparklesIcon className='w-5 h-5 text-orange-500' />
+              Special Behaviors
+            </SheetTitle>
           </SheetHeader>
 
           <div className='p-6 space-y-10'>

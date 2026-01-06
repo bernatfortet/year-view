@@ -15,14 +15,19 @@ export function DayCell({ day, size, hasTentativeEvent, birthdayEvents = [] }: D
 
   const baseClasses = 'flex items-start justify-between p-1 font-medium transition-colors border hover:bg-stone-50'
   const bgClass = hasTentativeEvent ? 'bg-amber-50' : isWeekend ? 'bg-stone-50' : 'bg-white'
-  const stateClasses = day.isToday ? 'border-stone-900 text-stone-900' : 'border-stone-200 text-stone-400'
+  const borderClass = 'border-stone-200'
+  const textClass = day.isToday ? '' : 'text-stone-400'
 
   // Scale font size based on cell size
   const fontSize = size >= 80 ? 'text-sm' : size >= 60 ? 'text-xs' : 'text-[10px]'
 
   return (
-    <div className={`${baseClasses} ${bgClass} ${stateClasses} ${fontSize}`} style={{ width: size, height: size }}>
-      <span>{day.dayOfMonth}</span>
+    <div className={`${baseClasses} ${bgClass} ${borderClass} ${textClass} ${fontSize}`} style={{ width: size, height: size }}>
+      {day.isToday ? (
+        <span className='bg-blue-600 text-white rounded-full px-1.5 py-0.5 text-xs font-medium leading-none'>{day.dayOfMonth}</span>
+      ) : (
+        <span>{day.dayOfMonth}</span>
+      )}
       {birthdayEvents.length > 0 && <BirthdayIndicator events={birthdayEvents} />}
     </div>
   )
