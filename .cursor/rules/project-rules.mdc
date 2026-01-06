@@ -1,0 +1,21 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+
+### Languages / Frameworks
+
+- typescript
+- bun
+- TanStack Start
+
+### Testing
+
+- most likely I will be using vitest
+  React Components
+
+- When creating a component I like to use a function. Destructure the props inside of the function not in the args.
+- **Prefer components over render functions**: Instead of `renderFoo()` functions, create proper `<Foo />` components with props. This follows React patterns and improves reusability.
+- **Component naming**: Use PascalCase for component names (e.g., `AirtableConnection`, not `renderAirtableConnection`)
+- **Move components outside**: Define components outside the main component, not as inner functions

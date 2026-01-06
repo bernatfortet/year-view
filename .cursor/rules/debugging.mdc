@@ -1,0 +1,5 @@
+---
+alwaysApply: true
+---
+
+When debugging please make the best use of the right console tootls. e.g. console.table, console.group, console.count

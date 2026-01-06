@@ -9,6 +9,9 @@ export interface CalendarEvent {
   endDate: string // YYYY-MM-DD format (exclusive, following Google Calendar convention)
   colorId?: string
   status: 'confirmed' | 'tentative' | 'cancelled'
+  calendarId: string // ID of the calendar this event belongs to
+  backgroundColor?: string // Color from the calendar
+  htmlLink?: string // Link to view/edit the event in Google Calendar
 }
 
 /**
@@ -39,7 +42,6 @@ export interface CalendarDay {
 export interface YearViewProps {
   year: number
   events: CalendarEvent[]
-  onYearChange?: (year: number) => void
   daySize?: number
 }
 
@@ -66,7 +68,6 @@ export interface DayCellProps {
  */
 export interface EventBarProps {
   event: LayoutEvent
-  weekIndex: number
 }
 
 /**
@@ -86,4 +87,3 @@ export const EVENT_COLORS: Record<string, string> = {
   '11': '#d50000', // Tomato
   default: '#4285f4', // Default blue
 }
-

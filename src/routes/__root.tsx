@@ -1,9 +1,15 @@
 import { HeadContent, Scripts, createRootRoute, Outlet } from '@tanstack/react-router'
-import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
-import { TanStackDevtools } from '@tanstack/react-devtools'
+// import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
+// import { TanStackDevtools } from '@tanstack/react-devtools'
+import { CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react'
+import { useStore } from '@nanostores/react'
 
 import { AuthProvider } from '../context/AuthContext'
-import { GoogleSignInButton } from '../components/GoogleSignInButton'
+import { CalendarProvider } from '../context/CalendarContext'
+import { CalendarSidebar } from '../components/CalendarSidebar'
+import { Button } from '../components/ui/button'
+import { SidebarProvider, SidebarInset, useSidebar } from '../components/ui/sidebar'
+import { $year } from '../components/calendar/calendar.store'
 import appCss from '../styles.css?url'
 
 export const Route = createRootRoute({
@@ -34,13 +40,13 @@ export const Route = createRootRoute({
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang='en'>
       <head>
         <HeadContent />
       </head>
-      <body className="min-h-screen bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900">
+      <body className='h-screen overflow-hidden bg-background'>
         {children}
-        <TanStackDevtools
+        {/* <TanStackDevtools
           config={{
             position: 'bottom-right',
           }}
@@ -50,7 +56,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
               render: <TanStackRouterDevtoolsPanel />,
             },
           ]}
-        />
+        /> */}
         <Scripts />
       </body>
     </html>
@@ -60,23 +66,73 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   return (
     <AuthProvider>
-      <div className="min-h-screen flex flex-col">
-        <header className="sticky top-0 z-50 backdrop-blur-md bg-zinc-900/80 border-b border-zinc-700/50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-16">
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold text-white">Year View</h1>
-              </div>
-
-              <GoogleSignInButton />
-            </div>
-          </div>
-        </header>
-
-        <main className="flex-1">
-          <Outlet />
-        </main>
-      </div>
+      <CalendarProvider>
+        <SidebarProvider defaultOpen={false}>
+          <CalendarSidebar />
+          <MainContent />
+        </SidebarProvider>
+      </CalendarProvider>
     </AuthProvider>
+  )
+}
+
+function MainContent() {
+  const { toggleSidebar, open } = useSidebar()
+  const year = useStore($year)
+
+  function handlePreviousYear() {
+    $year.set(year - 1)
+  }
+
+  function handleNextYear() {
+    $year.set(year + 1)
+  }
+
+  return (
+    <SidebarInset className='h-screen overflow-auto'>
+      {/* Header */}
+      <header className='sticky top-0 z-50 flex h-12 shrink-0 items-center border-b bg-background px-4'>
+        {/* Left: Show Calendars + Year View */}
+        <div className='flex items-center gap-4'>
+          <Button variant='ghost' size='sm' onClick={toggleSidebar} className='gap-2'>
+            <CalendarIcon className='size-4' />
+            <span>{open ? 'Hide Calendars' : 'Show Calendars'}</span>
+          </Button>
+
+          <span className='text-sm font-bold text-black'>Year View</span>
+        </div>
+
+        {/* Center: Year Navigation */}
+        <div className='flex-1 flex justify-center'>
+          <div className='flex items-center gap-2'>
+            <button
+              onClick={handlePreviousYear}
+              className='p-1.5 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-200/50 transition-colors'
+              aria-label='Previous year'
+            >
+              <ChevronLeft className='w-5 h-5' />
+            </button>
+
+            <span className='text-lg font-bold text-stone-800 min-w-[4rem] text-center'>{year}</span>
+
+            <button
+              onClick={handleNextYear}
+              className='p-1.5 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-200/50 transition-colors'
+              aria-label='Next year'
+            >
+              <ChevronRight className='w-5 h-5' />
+            </button>
+          </div>
+        </div>
+
+        {/* Right spacer for balance */}
+        <div className='w-[200px]' />
+      </header>
+
+      {/* Main Content */}
+      <main className='flex-1'>
+        <Outlet />
+      </main>
+    </SidebarInset>
   )
 }

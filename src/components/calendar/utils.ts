@@ -153,6 +153,7 @@ export function getEventDuration(event: CalendarEvent): number {
  * Uses a packing algorithm similar to Google Calendar:
  * - Longer events are placed first (at the top)
  * - Events are assigned to rows to avoid overlaps
+ * - Events are clipped to only show on current month days (not ghost days)
  */
 export function layoutEventsForWeek(
   events: CalendarEvent[],
@@ -258,6 +259,18 @@ export function layoutEventsForWeek(
       }
     }
 
+    // Clip to only current month days (skip ghost days)
+    while (startColumn <= endColumn && !weekDays[startColumn].isCurrentMonth) {
+      startColumn++
+    }
+
+    while (endColumn >= startColumn && !weekDays[endColumn].isCurrentMonth) {
+      endColumn--
+    }
+
+    // Skip if event only spans ghost days
+    if (startColumn > endColumn) continue
+
     const spanDays = endColumn - startColumn + 1
 
     // Find the first available row
@@ -308,20 +321,7 @@ export function layoutEventsForWeek(
  * Get month name from month index (0-11)
  */
 export function getMonthName(month: number): string {
-  const months = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ]
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
   return months[month]
 }

@@ -13,6 +13,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as DemoStartServerFuncsRouteImport } from './routes/demo/start.server-funcs'
 import { Route as DemoStartApiRequestRouteImport } from './routes/demo/start.api-request'
 import { Route as DemoApiNamesRouteImport } from './routes/demo/api.names'
+import { Route as ApiCalendarListRouteImport } from './routes/api/calendar/list'
+import { Route as ApiCalendarEventsRouteImport } from './routes/api/calendar/events'
 import { Route as ApiAuthSignoutRouteImport } from './routes/api/auth/signout'
 import { Route as ApiAuthSessionRouteImport } from './routes/api/auth/session'
 import { Route as ApiAuthGoogleRouteImport } from './routes/api/auth/google'
@@ -40,6 +42,16 @@ const DemoStartApiRequestRoute = DemoStartApiRequestRouteImport.update({
 const DemoApiNamesRoute = DemoApiNamesRouteImport.update({
   id: '/demo/api/names',
   path: '/demo/api/names',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCalendarListRoute = ApiCalendarListRouteImport.update({
+  id: '/api/calendar/list',
+  path: '/api/calendar/list',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCalendarEventsRoute = ApiCalendarEventsRouteImport.update({
+  id: '/api/calendar/events',
+  path: '/api/calendar/events',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAuthSignoutRoute = ApiAuthSignoutRouteImport.update({
@@ -88,6 +100,8 @@ export interface FileRoutesByFullPath {
   '/api/auth/google': typeof ApiAuthGoogleRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/auth/signout': typeof ApiAuthSignoutRoute
+  '/api/calendar/events': typeof ApiCalendarEventsRoute
+  '/api/calendar/list': typeof ApiCalendarListRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
@@ -102,6 +116,8 @@ export interface FileRoutesByTo {
   '/api/auth/google': typeof ApiAuthGoogleRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/auth/signout': typeof ApiAuthSignoutRoute
+  '/api/calendar/events': typeof ApiCalendarEventsRoute
+  '/api/calendar/list': typeof ApiCalendarListRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
@@ -117,6 +133,8 @@ export interface FileRoutesById {
   '/api/auth/google': typeof ApiAuthGoogleRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/auth/signout': typeof ApiAuthSignoutRoute
+  '/api/calendar/events': typeof ApiCalendarEventsRoute
+  '/api/calendar/list': typeof ApiCalendarListRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
@@ -133,6 +151,8 @@ export interface FileRouteTypes {
     | '/api/auth/google'
     | '/api/auth/session'
     | '/api/auth/signout'
+    | '/api/calendar/events'
+    | '/api/calendar/list'
     | '/demo/api/names'
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
@@ -147,6 +167,8 @@ export interface FileRouteTypes {
     | '/api/auth/google'
     | '/api/auth/session'
     | '/api/auth/signout'
+    | '/api/calendar/events'
+    | '/api/calendar/list'
     | '/demo/api/names'
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
@@ -161,6 +183,8 @@ export interface FileRouteTypes {
     | '/api/auth/google'
     | '/api/auth/session'
     | '/api/auth/signout'
+    | '/api/calendar/events'
+    | '/api/calendar/list'
     | '/demo/api/names'
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
@@ -176,6 +200,8 @@ export interface RootRouteChildren {
   ApiAuthGoogleRoute: typeof ApiAuthGoogleRoute
   ApiAuthSessionRoute: typeof ApiAuthSessionRoute
   ApiAuthSignoutRoute: typeof ApiAuthSignoutRoute
+  ApiCalendarEventsRoute: typeof ApiCalendarEventsRoute
+  ApiCalendarListRoute: typeof ApiCalendarListRoute
   DemoApiNamesRoute: typeof DemoApiNamesRoute
   DemoStartApiRequestRoute: typeof DemoStartApiRequestRoute
   DemoStartServerFuncsRoute: typeof DemoStartServerFuncsRoute
@@ -214,6 +240,20 @@ declare module '@tanstack/react-router' {
       path: '/demo/api/names'
       fullPath: '/demo/api/names'
       preLoaderRoute: typeof DemoApiNamesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/calendar/list': {
+      id: '/api/calendar/list'
+      path: '/api/calendar/list'
+      fullPath: '/api/calendar/list'
+      preLoaderRoute: typeof ApiCalendarListRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/calendar/events': {
+      id: '/api/calendar/events'
+      path: '/api/calendar/events'
+      fullPath: '/api/calendar/events'
+      preLoaderRoute: typeof ApiCalendarEventsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/auth/signout': {
@@ -280,6 +320,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAuthGoogleRoute: ApiAuthGoogleRoute,
   ApiAuthSessionRoute: ApiAuthSessionRoute,
   ApiAuthSignoutRoute: ApiAuthSignoutRoute,
+  ApiCalendarEventsRoute: ApiCalendarEventsRoute,
+  ApiCalendarListRoute: ApiCalendarListRoute,
   DemoApiNamesRoute: DemoApiNamesRoute,
   DemoStartApiRequestRoute: DemoStartApiRequestRoute,
   DemoStartServerFuncsRoute: DemoStartServerFuncsRoute,
