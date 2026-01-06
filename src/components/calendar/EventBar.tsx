@@ -7,6 +7,8 @@ export function EventBar({ event }: EventBarProps) {
     ? EVENT_COLORS[event.colorId] || EVENT_COLORS.default
     : event.backgroundColor || EVENT_COLORS.default
 
+  const textColor = shouldUseWhiteText(backgroundColor) ? 'text-white' : 'text-black'
+
   // Calculate grid column positioning (1-indexed for CSS grid)
   const gridColumnStart = event.startColumn + 1
   const gridColumnEnd = gridColumnStart + event.spanDays
@@ -25,7 +27,7 @@ export function EventBar({ event }: EventBarProps) {
 
   return (
     <div
-      className={`h-4 flex items-center px-1.5 text-[10px] font-medium text-black truncate cursor-pointer hover:brightness-110 transition-all pointer-events-auto ${roundedLeft} ${roundedRight} ${marginLeft} ${marginRight}`}
+      className={`h-4 flex items-center px-1.5 text-[10px] font-medium ${textColor} truncate cursor-pointer hover:brightness-110 transition-all pointer-events-auto ${roundedLeft} ${roundedRight} ${marginLeft} ${marginRight}`}
       style={{
         backgroundColor,
         gridColumn: `${gridColumnStart} / ${gridColumnEnd}`,
@@ -39,5 +41,18 @@ export function EventBar({ event }: EventBarProps) {
       )}
     </div>
   )
+}
+
+function shouldUseWhiteText(hexColor: string): boolean {
+  const hex = hexColor.replace('#', '')
+
+  const r = parseInt(hex.substring(0, 2), 16)
+  const g = parseInt(hex.substring(2, 4), 16)
+  const b = parseInt(hex.substring(4, 6), 16)
+
+  // Calculate relative luminance using sRGB formula
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+
+  return luminance < 0.5
 }
 

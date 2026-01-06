@@ -73,19 +73,19 @@ export interface EventBarProps {
 }
 
 /**
- * Color mapping for Google Calendar color IDs
+ * Color mapping for Google Calendar color IDs (background/pastel versions)
  */
 export const EVENT_COLORS: Record<string, string> = {
-  '1': '#7986cb', // Lavender
-  '2': '#33b679', // Sage
-  '3': '#8e24aa', // Grape
-  '4': '#e67c73', // Flamingo
-  '5': '#f6bf26', // Banana
-  '6': '#f4511e', // Tangerine
-  '7': '#039be5', // Peacock
-  '8': '#616161', // Graphite
-  '9': '#3f51b5', // Blueberry
-  '10': '#0b8043', // Basil
-  '11': '#d50000', // Tomato
-  default: '#4285f4', // Default blue
+  '1': '#a4bdfc', // Lavender
+  '2': '#7ae7bf', // Sage
+  '3': '#dbadff', // Grape
+  '4': '#ff887c', // Flamingo
+  '5': '#fbd75b', // Banana
+  '6': '#ffb878', // Tangerine
+  '7': '#46d6db', // Peacock
+  '8': '#e1e1e1', // Graphite
+  '9': '#5484ed', // Blueberry
+  '10': '#51b749', // Basil
+  '11': '#dc2127', // Tomato
+  default: '#a4bdfc', // Default lavender
 }

@@ -1,8 +1,10 @@
 import { RefreshCwIcon, SettingsIcon, SlidersHorizontalIcon } from "lucide-react"
 
+import { useStore } from "@nanostores/react"
+
 import { useAuth } from "@/context/AuthContext"
 import { useCalendars } from "@/context/CalendarContext"
-import { triggerEventsRefresh } from "@/stores/events.store"
+import { triggerEventsRefresh, $isSyncingEvents } from "@/stores/events.store"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Separator } from "@/components/ui/separator"
@@ -34,6 +36,9 @@ export function CalendarSidebar() {
     refreshCalendars,
   } = useCalendars()
 
+  // Track global sync state for the refresh button
+  const isSyncing = useStore($isSyncingEvents)
+
   // Group calendars by account (owner email)
   const calendarsByAccount: CalendarsByAccount[] = user?.email
     ? [{ email: user.email, calendars }]
@@ -56,10 +61,10 @@ export function CalendarSidebar() {
               variant="ghost"
               size="icon"
               onClick={handleRefresh}
-              disabled={isLoadingCalendars}
+              disabled={isSyncing || isLoadingCalendars}
             >
-              <RefreshCwIcon className={isLoadingCalendars ? 'animate-spin' : ''} />
-              <span className="sr-only">Refresh calendars</span>
+              <RefreshCwIcon className={isSyncing || isLoadingCalendars ? 'animate-spin' : ''} />
+              <span className="sr-only">Refresh</span>
             </Button>
 
             <Button variant="ghost" size="icon">

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { useStore } from '@nanostores/react'
 
 import type { CalendarEvent } from '../components/calendar/types'
-import { $eventsRefreshTrigger } from '../stores/events.store'
+import { $eventsRefreshTrigger, $isSyncingEvents } from '../stores/events.store'
 
 const CACHE_KEY_PREFIX = 'year-view:events:'
 const CACHE_EXPIRY_MS = 1000 * 60 * 60 * 24 // 24 hours
@@ -24,7 +24,7 @@ interface UseCachedEventsResult {
   events: CalendarEvent[] // Filtered events based on selection
   allEvents: CalendarEvent[] // All fetched events
   isLoading: boolean
-  isRefreshing: boolean
+  isSyncing: boolean // True while fetching fresh data from Google Calendar
   error: string | null
   refetch: () => void
 }
@@ -34,8 +34,10 @@ export function useCachedEvents(params: UseCachedEventsParams): UseCachedEventsR
 
   const [allEvents, setAllEvents] = useState<CalendarEvent[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [isRefreshing, setIsRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Use global store for sync state so other components can access it
+  const isSyncing = useStore($isSyncingEvents)
 
   // Use ref to track if we have cached data
   const hasCachedDataRef = useRef(false)
@@ -85,7 +87,6 @@ export function useCachedEvents(params: UseCachedEventsParams): UseCachedEventsR
       showLoading: !hasCache,
       setAllEvents,
       setIsLoading,
-      setIsRefreshing,
       setError,
       hasCachedDataRef,
     })
@@ -108,7 +109,6 @@ export function useCachedEvents(params: UseCachedEventsParams): UseCachedEventsR
       showLoading: false,
       setAllEvents,
       setIsLoading,
-      setIsRefreshing,
       setError,
       hasCachedDataRef,
     })
@@ -137,7 +137,6 @@ export function useCachedEvents(params: UseCachedEventsParams): UseCachedEventsR
       showLoading: false,
       setAllEvents,
       setIsLoading,
-      setIsRefreshing,
       setError,
       hasCachedDataRef,
     })
@@ -147,7 +146,7 @@ export function useCachedEvents(params: UseCachedEventsParams): UseCachedEventsR
     events: filteredEvents,
     allEvents,
     isLoading,
-    isRefreshing,
+    isSyncing,
     error,
     refetch,
   }
@@ -199,7 +198,6 @@ async function fetchEventsFromApi(params: {
   showLoading: boolean
   setAllEvents: (events: CalendarEvent[]) => void
   setIsLoading: (loading: boolean) => void
-  setIsRefreshing: (refreshing: boolean) => void
   setError: (error: string | null) => void
   hasCachedDataRef: React.MutableRefObject<boolean>
 }) {
@@ -210,16 +208,16 @@ async function fetchEventsFromApi(params: {
     showLoading,
     setAllEvents,
     setIsLoading,
-    setIsRefreshing,
     setError,
     hasCachedDataRef,
   } = params
 
   if (showLoading) {
     setIsLoading(true)
-  } else {
-    setIsRefreshing(true)
   }
+
+  // Always set syncing state via store (accessible globally)
+  $isSyncingEvents.set(true)
 
   setError(null)
 
@@ -254,6 +252,6 @@ async function fetchEventsFromApi(params: {
     }
   } finally {
     setIsLoading(false)
-    setIsRefreshing(false)
+    $isSyncingEvents.set(false)
   }
 }

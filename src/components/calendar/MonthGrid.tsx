@@ -116,7 +116,7 @@ function getBirthdayEventsForDay(day: CalendarDay, events: CalendarEvent[]): Cal
   return birthdayEvents
 }
 
-const BIRTHDAY_KEYWORDS = ['birthday', 'aniversario', 'aniversari']
+const BIRTHDAY_KEYWORDS = ['birthday', 'bday', 'aniversario', 'aniversari']
 
 function isBirthdayEvent(event: CalendarEvent): boolean {
   const summaryLower = event.summary.toLowerCase()

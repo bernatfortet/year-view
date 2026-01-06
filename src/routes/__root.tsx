@@ -23,7 +23,7 @@ export const Route = createRootRoute({
         content: 'width=device-width, initial-scale=1',
       },
       {
-        title: 'Year View',
+        title: 'Year View Calendar',
       },
     ],
     links: [
@@ -90,8 +90,8 @@ function MainContent() {
 
   return (
     <SidebarInset className='h-screen overflow-auto'>
-      {/* Header */}
-      <header className='sticky top-0 z-50 flex h-12 shrink-0 items-center border-b bg-background px-4'>
+      {/* Header - 3 equal columns */}
+      <header className='sticky top-0 z-50 grid grid-cols-3 h-12 shrink-0 items-center border-b bg-background px-4'>
         {/* Left: Show Calendars + Year View */}
         <div className='flex items-center gap-4'>
           <Button variant='ghost' size='sm' onClick={toggleSidebar} className='gap-2'>
@@ -99,11 +99,11 @@ function MainContent() {
             <span>{open ? 'Hide Calendars' : 'Show Calendars'}</span>
           </Button>
 
-          <span className='text-sm font-bold text-black'>Year View</span>
+          <span className='text-sm font-bold text-black'>Year View Calendar</span>
         </div>
 
         {/* Center: Year Navigation */}
-        <div className='flex-1 flex justify-center'>
+        <div className='flex justify-center'>
           <div className='flex items-center gap-2'>
             <button
               onClick={handlePreviousYear}
@@ -113,7 +113,7 @@ function MainContent() {
               <ChevronLeft className='w-5 h-5' />
             </button>
 
-            <span className='text-lg font-bold text-stone-800 min-w-[4rem] text-center'>{year}</span>
+            <span className='text-lg font-bold text-stone-800 min-w-16 text-center'>{year}</span>
 
             <button
               onClick={handleNextYear}
@@ -125,8 +125,8 @@ function MainContent() {
           </div>
         </div>
 
-        {/* Right spacer for balance */}
-        <div className='w-[200px]' />
+        {/* Right: Empty for balance */}
+        <div />
       </header>
 
       {/* Main Content */}

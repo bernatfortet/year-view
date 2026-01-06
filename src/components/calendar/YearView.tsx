@@ -14,7 +14,16 @@ export function YearView({ year, events, daySize = DEFAULT_DAY_SIZE }: YearViewP
 
   function handleMonthClick(month: number) {
     const element = document.querySelector(`[data-month="${month}"]`)
-    if (element) element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    if (!element) return
+
+    const scrollContainer = element.closest('[class*="overflow-auto"]')
+    if (!scrollContainer) return
+
+    const elementRect = element.getBoundingClientRect()
+    const containerRect = scrollContainer.getBoundingClientRect()
+    const targetScroll = scrollContainer.scrollTop + elementRect.top - containerRect.top - containerRect.height / 2 + elementRect.height / 2
+
+    smoothScrollTo(scrollContainer, targetScroll, 200)
   }
 
   return (
@@ -62,4 +71,26 @@ export function YearView({ year, events, daySize = DEFAULT_DAY_SIZE }: YearViewP
       </div>
     </div>
   )
+}
+
+function smoothScrollTo(element: Element, targetPosition: number, duration: number) {
+  const startPosition = element.scrollTop
+  const distance = targetPosition - startPosition
+  const startTime = performance.now()
+
+  function animate(currentTime: number) {
+    const elapsed = currentTime - startTime
+    const progress = Math.min(elapsed / duration, 1)
+
+    // Ease out cubic for smooth deceleration
+    const easeOut = 1 - Math.pow(1 - progress, 3)
+
+    element.scrollTop = startPosition + distance * easeOut
+
+    if (progress < 1) {
+      requestAnimationFrame(animate)
+    }
+  }
+
+  requestAnimationFrame(animate)
 }

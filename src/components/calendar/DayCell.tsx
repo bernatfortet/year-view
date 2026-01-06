@@ -1,3 +1,5 @@
+import { Gift } from 'lucide-react'
+
 import type { CalendarEvent, DayCellProps } from './types'
 import { EVENT_COLORS } from './types'
 import { Badge } from '@/components/ui/badge'
@@ -41,12 +43,13 @@ type BirthdayIndicatorProps = {
 function BirthdayIndicator({ events }: BirthdayIndicatorProps) {
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <Badge variant='outline' className='h-4 px-1 text-[10px] cursor-pointer bg-pink-50 border-pink-200 text-pink-600'>
-          🎁 {events.length}
+      <TooltipTrigger>
+        <Badge variant='outline' className='h-5 px-1 text-[10px] cursor-pointer bg-stone-100 border-stone-300 text-stone-600'>
+          <Gift className='w-4 h-4' />
+          {events.length}
         </Badge>
       </TooltipTrigger>
-      <TooltipContent side='right' className='p-2 bg-white text-stone-900 border border-stone-200 shadow-md'>
+      <TooltipContent side='top' hideArrow className='p-2 bg-white text-stone-900 border border-stone-200 shadow-md'>
         <div className='flex flex-col gap-1'>
           {events.map((event) => (
             <BirthdayEventBar key={event.id} event={event} />
