@@ -1,6 +1,9 @@
-import type { DayCellProps } from './types'
+import type { CalendarEvent, DayCellProps } from './types'
+import { EVENT_COLORS } from './types'
+import { Badge } from '@/components/ui/badge'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
-export function DayCell({ day, size }: DayCellProps) {
+export function DayCell({ day, size, hasTentativeEvent, birthdayEvents = [] }: DayCellProps) {
   if (!day.isCurrentMonth) {
     return <OutsideDayCell size={size} />
   }
@@ -8,8 +11,8 @@ export function DayCell({ day, size }: DayCellProps) {
   const jsDay = day.date.getDay()
   const isWeekend = jsDay === 0 || jsDay === 6
 
-  const baseClasses = 'flex items-start justify-start p-1 font-medium transition-colors border hover:bg-stone-50'
-  const bgClass = isWeekend ? 'bg-stone-50' : 'bg-white'
+  const baseClasses = 'flex items-start justify-between p-1 font-medium transition-colors border hover:bg-stone-50'
+  const bgClass = hasTentativeEvent ? 'bg-amber-50' : isWeekend ? 'bg-stone-50' : 'bg-white'
   const stateClasses = day.isToday ? 'border-stone-900 text-stone-900' : 'border-stone-200 text-stone-400'
 
   // Scale font size based on cell size
@@ -17,7 +20,8 @@ export function DayCell({ day, size }: DayCellProps) {
 
   return (
     <div className={`${baseClasses} ${bgClass} ${stateClasses} ${fontSize}`} style={{ width: size, height: size }}>
-      {day.dayOfMonth}
+      <span>{day.dayOfMonth}</span>
+      {birthdayEvents.length > 0 && <BirthdayIndicator events={birthdayEvents} />}
     </div>
   )
 }
@@ -28,4 +32,46 @@ type OutsideDayCellProps = {
 
 function OutsideDayCell({ size }: OutsideDayCellProps) {
   return <div className='invisible' style={{ width: size, height: size }} />
+}
+
+type BirthdayIndicatorProps = {
+  events: CalendarEvent[]
+}
+
+function BirthdayIndicator({ events }: BirthdayIndicatorProps) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Badge variant='outline' className='h-4 px-1 text-[10px] cursor-pointer bg-pink-50 border-pink-200 text-pink-600'>
+          🎁 {events.length}
+        </Badge>
+      </TooltipTrigger>
+      <TooltipContent side='right' className='p-2 bg-white text-stone-900 border border-stone-200 shadow-md'>
+        <div className='flex flex-col gap-1'>
+          {events.map((event) => (
+            <BirthdayEventBar key={event.id} event={event} />
+          ))}
+        </div>
+      </TooltipContent>
+    </Tooltip>
+  )
+}
+
+type BirthdayEventBarProps = {
+  event: CalendarEvent
+}
+
+function BirthdayEventBar({ event }: BirthdayEventBarProps) {
+  const backgroundColor = event.colorId
+    ? EVENT_COLORS[event.colorId] || EVENT_COLORS.default
+    : event.backgroundColor || EVENT_COLORS.default
+
+  return (
+    <div
+      className='h-4 flex items-center px-1.5 text-[10px] font-medium text-black truncate rounded-md min-w-32'
+      style={{ backgroundColor }}
+    >
+      <span className='truncate'>{event.summary}</span>
+    </div>
+  )
 }

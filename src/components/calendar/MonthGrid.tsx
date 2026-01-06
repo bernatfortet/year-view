@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 
-import type { MonthGridProps } from './types'
+import type { CalendarDay, CalendarEvent, MonthGridProps } from './types'
 import { DayCell } from './DayCell'
 import { EventBar } from './EventBar'
 import { $activeMonth } from './calendar.store'
@@ -40,16 +40,17 @@ export function MonthGrid({ year, month, events, daySize }: MonthGridProps) {
   }, [month])
 
   return (
-    <div ref={ref} data-month={month} className='flex items-center gap-8'>
+    <div ref={ref} data-month={month} className='flex items-center gap-12'>
       {/* Large Month Name - Left side */}
-      <div className='w-32 text-right text-stone-200 font-bold leading-none select-none' style={{ fontSize: '80px' }}>
+      <div className='w-56 text-right text-stone-200 font-bold leading-none select-none' style={{ fontSize: '100px' }}>
         {monthName}
       </div>
 
       {/* Calendar Grid */}
       <div>
         {weeks.map((week, weekIndex) => {
-          const layoutEvents = layoutEventsForWeek(events, week)
+          const nonBirthdayEvents = events.filter((event) => !isBirthdayEvent(event))
+          const layoutEvents = layoutEventsForWeek(nonBirthdayEvents, week)
           const maxRow = layoutEvents.reduce((max, event) => Math.max(max, event.row), -1)
           const eventRowCount = maxRow + 1
 
@@ -58,7 +59,13 @@ export function MonthGrid({ year, month, events, daySize }: MonthGridProps) {
               {/* Day Grid */}
               <div className='grid grid-cols-7'>
                 {week.map((day) => (
-                  <DayCell key={day.dateString} day={day} size={daySize} />
+                  <DayCell
+                    key={day.dateString}
+                    day={day}
+                    size={daySize}
+                    hasTentativeEvent={dayHasTentativeEvent(day, events)}
+                    birthdayEvents={getBirthdayEventsForDay(day, events)}
+                  />
                 ))}
               </div>
 
@@ -82,4 +89,37 @@ export function MonthGrid({ year, month, events, daySize }: MonthGridProps) {
       </div>
     </div>
   )
+}
+
+function dayHasTentativeEvent(day: CalendarDay, events: CalendarEvent[]): boolean {
+  const dateString = day.dateString
+
+  const hasTentative = events.some((event) => {
+    const hasQuestionMark = event.summary.includes('?')
+    const intersectsDay = event.startDate <= dateString && event.endDate > dateString
+
+    return hasQuestionMark && intersectsDay
+  })
+
+  return hasTentative
+}
+
+function getBirthdayEventsForDay(day: CalendarDay, events: CalendarEvent[]): CalendarEvent[] {
+  const dateString = day.dateString
+
+  const birthdayEvents = events.filter((event) => {
+    const intersectsDay = event.startDate <= dateString && event.endDate > dateString
+
+    return isBirthdayEvent(event) && intersectsDay
+  })
+
+  return birthdayEvents
+}
+
+const BIRTHDAY_KEYWORDS = ['birthday', 'aniversario', 'aniversari']
+
+function isBirthdayEvent(event: CalendarEvent): boolean {
+  const summaryLower = event.summary.toLowerCase()
+
+  return BIRTHDAY_KEYWORDS.some((keyword) => summaryLower.includes(keyword))
 }

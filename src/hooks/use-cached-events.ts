@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
+import { useStore } from '@nanostores/react'
+
 import type { CalendarEvent } from '../components/calendar/types'
+import { $eventsRefreshTrigger } from '../stores/events.store'
 
 const CACHE_KEY_PREFIX = 'year-view:events:'
 const CACHE_EXPIRY_MS = 1000 * 60 * 60 * 24 // 24 hours
@@ -36,6 +39,9 @@ export function useCachedEvents(params: UseCachedEventsParams): UseCachedEventsR
 
   // Use ref to track if we have cached data
   const hasCachedDataRef = useRef(false)
+
+  // Listen for manual refresh trigger from sidebar
+  const refreshTrigger = useStore($eventsRefreshTrigger)
 
   // Generate cache key based on year only (we fetch all calendars)
   const cacheKey = `${CACHE_KEY_PREFIX}${year}`
@@ -84,6 +90,29 @@ export function useCachedEvents(params: UseCachedEventsParams): UseCachedEventsR
       hasCachedDataRef,
     })
   }, [isAuthenticated, year, calendarIdsKey, cacheKey])
+
+  // Handle manual refresh trigger from sidebar
+  const initialTriggerRef = useRef(refreshTrigger)
+
+  useEffect(() => {
+    // Skip initial mount - only respond to actual refresh requests
+    if (refreshTrigger === initialTriggerRef.current) return
+    if (!isAuthenticated || allCalendarIds.length === 0) return
+
+    console.log('🔄 Manual refresh triggered')
+
+    fetchEventsFromApi({
+      year,
+      calendarIds: allCalendarIds,
+      cacheKey,
+      showLoading: false,
+      setAllEvents,
+      setIsLoading,
+      setIsRefreshing,
+      setError,
+      hasCachedDataRef,
+    })
+  }, [refreshTrigger, isAuthenticated, year, allCalendarIds, cacheKey])
 
   // Filter events client-side based on selected calendars (instant!)
   const selectedCalendarIdsSet = useMemo(

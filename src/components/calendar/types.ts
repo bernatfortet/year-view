@@ -61,6 +61,8 @@ export interface MonthGridProps {
 export interface DayCellProps {
   day: CalendarDay
   size: number
+  hasTentativeEvent?: boolean
+  birthdayEvents?: CalendarEvent[]
 }
 
 /**

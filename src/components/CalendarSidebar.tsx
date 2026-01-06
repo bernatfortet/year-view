@@ -2,6 +2,7 @@ import { RefreshCwIcon, SettingsIcon, SlidersHorizontalIcon } from "lucide-react
 
 import { useAuth } from "@/context/AuthContext"
 import { useCalendars } from "@/context/CalendarContext"
+import { triggerEventsRefresh } from "@/stores/events.store"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Separator } from "@/components/ui/separator"
@@ -40,6 +41,7 @@ export function CalendarSidebar() {
 
   const handleRefresh = () => {
     refreshCalendars()
+    triggerEventsRefresh()
   }
 
   return (

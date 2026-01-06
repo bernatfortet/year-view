@@ -32,8 +32,8 @@ function HomePage() {
     isAuthenticated,
   })
 
-  // Show loading state while checking auth
-  if (authLoading || isLoadingCalendars) {
+  // Show loading state only on initial load (not during refresh)
+  if (authLoading || (isLoadingCalendars && calendars.length === 0)) {
     return (
       <div className='flex items-center justify-center min-h-[60vh]'>
         <div className='text-center'>
