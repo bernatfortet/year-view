@@ -3,6 +3,7 @@ import { useStore } from '@nanostores/react'
 
 import type { CalendarEvent } from '../components/calendar/types'
 import { $eventsRefreshTrigger, $isSyncingEvents } from '../stores/events.store'
+import { $excludeTerms } from '../stores/settings.store'
 
 const CACHE_KEY_PREFIX = 'year-view:events:'
 const CACHE_EXPIRY_MS = 1000 * 60 * 60 * 24 // 24 hours
@@ -44,6 +45,9 @@ export function useCachedEvents(params: UseCachedEventsParams): UseCachedEventsR
 
   // Listen for manual refresh trigger from sidebar
   const refreshTrigger = useStore($eventsRefreshTrigger)
+
+  // Get exclude terms for filtering
+  const excludeTerms = useStore($excludeTerms)
 
   // Generate cache key based on year only (we fetch all calendars)
   const cacheKey = `${CACHE_KEY_PREFIX}${year}`
@@ -115,16 +119,25 @@ export function useCachedEvents(params: UseCachedEventsParams): UseCachedEventsR
   }, [refreshTrigger, isAuthenticated, year, allCalendarIds, cacheKey])
 
   // Filter events client-side based on selected calendars (instant!)
-  const selectedCalendarIdsSet = useMemo(
-    () => new Set(selectedCalendarIds),
-    [selectedCalendarIds]
-  )
+  const selectedCalendarIdsSet = useMemo(() => new Set(selectedCalendarIds), [selectedCalendarIds])
 
   const filteredEvents = useMemo(() => {
     if (selectedCalendarIds.length === 0) return []
 
-    return allEvents.filter((event) => selectedCalendarIdsSet.has(event.calendarId))
-  }, [allEvents, selectedCalendarIdsSet, selectedCalendarIds.length])
+    const calendarFiltered = allEvents.filter((event) => selectedCalendarIdsSet.has(event.calendarId))
+
+    // Apply exclusion filter
+    if (excludeTerms.length === 0) return calendarFiltered
+
+    const result = calendarFiltered.filter((event) => {
+      const summaryLower = event.summary.toLowerCase()
+      const matchesExcludeTerm = excludeTerms.some((term) => summaryLower.includes(term.toLowerCase()))
+
+      return !matchesExcludeTerm
+    })
+
+    return result
+  }, [allEvents, selectedCalendarIdsSet, selectedCalendarIds.length, excludeTerms])
 
   // Manual refetch
   function refetch() {

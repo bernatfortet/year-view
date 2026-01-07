@@ -5,6 +5,7 @@ import { useStore } from '@nanostores/react'
 import { AuthProvider } from '../context/AuthContext'
 import { CalendarProvider } from '../context/CalendarContext'
 import { CalendarSidebar } from '../components/CalendarSidebar'
+import { SettingsSheet } from '../components/SettingsSheet'
 import { Button } from '../components/ui/button'
 import { $year } from '../components/calendar/calendar.store'
 import { $sidebarOpen, toggleSidebar } from '../stores/sidebar.store'
@@ -101,8 +102,10 @@ function AppLayout() {
           </div>
         </div>
 
-        {/* Right: Empty for balance */}
-        <div />
+        {/* Right: Settings */}
+        <div className='flex justify-end'>
+          <SettingsSheet />
+        </div>
       </header>
 
       {/* Content area with floating sidebar */}

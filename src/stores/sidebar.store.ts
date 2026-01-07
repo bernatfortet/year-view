@@ -14,3 +14,4 @@ export function closeSidebar() {
   $sidebarOpen.set(false)
 }
 
+

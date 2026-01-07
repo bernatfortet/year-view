@@ -266,3 +266,4 @@ The following are explicitly **not** part of this integration:
 - Accessing non-all-day (timed) events
 - Offline access to calendar data
 
+
