@@ -1,4 +1,63 @@
-import type { CalendarDay, CalendarEvent, LayoutEvent } from './types'
+import type { CalendarDay, CalendarEvent, LayoutEvent, TentativeInfo } from './types'
+
+const BIRTHDAY_KEYWORDS = ['birthday', 'bday', 'aniversario', 'aniversari']
+
+export function isBirthdayEvent(event: CalendarEvent): boolean {
+  const summaryLower = event.summary.toLowerCase()
+
+  return BIRTHDAY_KEYWORDS.some((keyword) => summaryLower.includes(keyword))
+}
+
+export function dayHasTentativeEvent(day: CalendarDay, events: CalendarEvent[]): boolean {
+  const dateString = day.dateString
+
+  const hasTentative = events.some((event) => {
+    const hasQuestionMark = event.summary.includes('?')
+    const intersectsDay = event.startDate <= dateString && event.endDate > dateString
+
+    return hasQuestionMark && intersectsDay
+  })
+
+  return hasTentative
+}
+
+export function getTentativeInfoForDay(day: CalendarDay, events: CalendarEvent[]): TentativeInfo {
+  const dateString = day.dateString
+
+  const tentativeEvent = events.find((event) => {
+    const hasQuestionMark = event.summary.includes('?')
+    const intersectsDay = event.startDate <= dateString && event.endDate > dateString
+    return hasQuestionMark && intersectsDay
+  })
+
+  if (!tentativeEvent) {
+    return { hasTentative: false, isFirstDay: false, isLastDay: false }
+  }
+
+  const isFirstDay = tentativeEvent.startDate === dateString
+  const lastDayString = getDateBefore(tentativeEvent.endDate)
+  const isLastDay = lastDayString === dateString
+
+  return { hasTentative: true, isFirstDay, isLastDay }
+}
+
+function getDateBefore(dateString: string): string {
+  const date = new Date(dateString)
+  date.setDate(date.getDate() - 1)
+  return formatDateString(date)
+}
+
+export function getBirthdayEventsForDay(day: CalendarDay, events: CalendarEvent[]): CalendarEvent[] {
+  const dateString = day.dateString
+
+  const birthdayEvents = events.filter((event) => {
+    const intersectsDay = event.startDate <= dateString && event.endDate > dateString
+
+    return isBirthdayEvent(event) && intersectsDay
+  })
+
+  return birthdayEvents
+}
 
 /**
  * Format a Date object to YYYY-MM-DD string
@@ -128,11 +187,7 @@ export function groupDaysIntoWeeks(days: CalendarDay[]): CalendarDay[][] {
 /**
  * Check if an event overlaps with a given date range
  */
-export function eventOverlapsRange(
-  event: CalendarEvent,
-  rangeStart: string,
-  rangeEnd: string
-): boolean {
+export function eventOverlapsRange(event: CalendarEvent, rangeStart: string, rangeEnd: string): boolean {
   // Event end date is exclusive in Google Calendar
   return event.startDate < rangeEnd && event.endDate > rangeStart
 }
@@ -155,10 +210,7 @@ export function getEventDuration(event: CalendarEvent): number {
  * - Events are assigned to rows to avoid overlaps
  * - Events are clipped to only show on current month days (not ghost days)
  */
-export function layoutEventsForWeek(
-  events: CalendarEvent[],
-  weekDays: CalendarDay[]
-): LayoutEvent[] {
+export function layoutEventsForWeek(events: CalendarEvent[], weekDays: CalendarDay[]): LayoutEvent[] {
   if (weekDays.length === 0) return []
 
   const weekStart = weekDays[0].dateString
@@ -167,9 +219,7 @@ export function layoutEventsForWeek(
   const weekEnd = formatDateString(weekEndDate)
 
   // Filter events that overlap with this week
-  const relevantEvents = events.filter((event) =>
-    eventOverlapsRange(event, weekStart, weekEnd)
-  )
+  const relevantEvents = events.filter((event) => eventOverlapsRange(event, weekStart, weekEnd))
 
   // Sort by duration (longest first), then by start date
   const sortedEvents = [...relevantEvents].sort((a, b) => {
@@ -246,11 +296,7 @@ export function layoutEventsForWeek(
     // Recalculate endColumn properly
     for (let i = 6; i >= 0; i--) {
       const nextDayString = formatDateString(
-        new Date(
-          weekDays[i].date.getFullYear(),
-          weekDays[i].date.getMonth(),
-          weekDays[i].date.getDate() + 1
-        )
+        new Date(weekDays[i].date.getFullYear(), weekDays[i].date.getMonth(), weekDays[i].date.getDate() + 1),
       )
 
       if (nextDayString <= event.endDate) {
@@ -333,3 +379,51 @@ export function getWeekDayNames(): string[] {
   return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 }
 
+/**
+ * Get all weeks of a year as continuous CalendarDay[][] arrays
+ * Each week starts on Monday and ends on Sunday
+ */
+export function getYearWeeks(year: number): CalendarDay[][] {
+  const weeks: CalendarDay[][] = []
+
+  // Find the first Monday of the year (or the Monday before Jan 1)
+  const jan1 = new Date(year, 0, 1)
+  const jan1DayOfWeek = getDayOfWeek(jan1)
+
+  // Start from the Monday of the week containing Jan 1
+  const startDate = new Date(year, 0, 1 - jan1DayOfWeek)
+
+  // Find the last day we need to include (Dec 31 or the Sunday after)
+  const dec31 = new Date(year, 11, 31)
+  const dec31DayOfWeek = getDayOfWeek(dec31)
+  const endDate = new Date(year, 11, 31 + (6 - dec31DayOfWeek))
+
+  const today = new Date()
+  const todayString = formatDateString(today)
+
+  const currentDate = new Date(startDate)
+
+  while (currentDate <= endDate) {
+    const week: CalendarDay[] = []
+
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(currentDate)
+      const dateString = formatDateString(date)
+      const isCurrentYear = date.getFullYear() === year
+
+      week.push({
+        date,
+        dayOfMonth: date.getDate(),
+        isCurrentMonth: isCurrentYear,
+        isToday: dateString === todayString,
+        dateString,
+      })
+
+      currentDate.setDate(currentDate.getDate() + 1)
+    }
+
+    weeks.push(week)
+  }
+
+  return weeks
+}

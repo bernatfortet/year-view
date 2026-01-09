@@ -1,3 +1,5 @@
+import { Row } from '@/styles'
+
 import type { EventBarProps } from './types'
 import { EVENT_COLORS } from './types'
 
@@ -26,8 +28,8 @@ export function EventBar({ event }: EventBarProps) {
   }
 
   return (
-    <div
-      className={`h-4 flex items-center px-1.5 text-[10px] font-medium ${textColor} truncate cursor-pointer hover:brightness-110 transition-all pointer-events-auto ${roundedLeft} ${roundedRight} ${marginLeft} ${marginRight}`}
+    <Row
+      className={`h-4 items-center px-1.5 text-[10px] font-medium ${textColor} truncate cursor-pointer hover:brightness-110 pointer-events-auto ${roundedLeft} ${roundedRight} ${marginLeft} ${marginRight}`}
       style={{
         backgroundColor,
         gridColumn: `${gridColumnStart} / ${gridColumnEnd}`,
@@ -39,7 +41,7 @@ export function EventBar({ event }: EventBarProps) {
       {!event.continuesFromPrevious && (
         <span className="truncate">{event.summary}</span>
       )}
-    </div>
+    </Row>
   )
 }
 

@@ -19,3 +19,10 @@ alwaysApply: true
 - **Prefer components over render functions**: Instead of `renderFoo()` functions, create proper `<Foo />` components with props. This follows React patterns and improves reusability.
 - **Component naming**: Use PascalCase for component names (e.g., `AirtableConnection`, not `renderAirtableConnection`)
 - **Move components outside**: Define components outside the main component, not as inner functions
+
+### Layout Components
+
+- Use `<Row>` and `<Column>` components from `@/styles` for flex containers instead of plain `<div>` with flex classes
+- `<Row>` = `flex flex-row`, `<Column>` = `flex flex-col`, `<Grid>` = `grid`
+- This improves readability and consistency across the codebase
+- Example: `<Row className="items-center gap-2">` instead of `<div className="flex flex-row items-center gap-2">`

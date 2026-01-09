@@ -2,10 +2,12 @@ import { useMemo } from 'react'
 
 import { formatDateString, parseDateString, getDayOfWeek } from '../calendar/utils'
 
+type TripStatus = 'todo' | 'pending' | 'has-info'
+
 interface TripMinimapProps {
   startDate: string // YYYY-MM-DD
   endDate: string // YYYY-MM-DD (exclusive)
-  backgroundColor?: string
+  tripStatus?: TripStatus
 }
 
 interface MinimapDay {
@@ -16,23 +18,26 @@ interface MinimapDay {
 
 const MAX_WEEKS = 5
 const CELL_SIZE = 8
-const GAP = 2
 
 export function TripMinimap(props: TripMinimapProps) {
-  const { startDate, endDate, backgroundColor } = props
+  const { startDate, endDate, tripStatus } = props
 
   const weeks = useMemo(() => {
     return generateMinimapWeeks({ startDate, endDate })
   }, [startDate, endDate])
 
-  const fillColor = backgroundColor || '#a8a29e' // stone-400 fallback
+  const fillColor =
+    tripStatus === 'todo'
+      ? 'rgba(250, 204, 21, 0.4)' // yellow for needs planning
+      : tripStatus === 'pending'
+        ? 'rgba(114, 47, 55, 0.6)' // brand-red 60% for needs info
+        : 'rgba(114, 47, 55, 0.8)' // brand-red 80% for has-info
 
   return (
     <div
-      className='grid shrink-0'
+      className='grid shrink-0 ring-[0.5px]  ring-black/10'
       style={{
         gridTemplateColumns: `repeat(7, ${CELL_SIZE}px)`,
-        gap: `${GAP}px`,
       }}
     >
       {weeks.map((week, weekIndex) => (
@@ -60,7 +65,7 @@ function DayCell(props: { day: MinimapDay; fillColor: string }) {
   if (day.isInTrip) {
     return (
       <div
-        className='rounded-sm relative'
+        className='relative  ring-[0.5px] ring-inset ring-black/10'
         style={{
           width: CELL_SIZE,
           height: CELL_SIZE,
@@ -74,7 +79,7 @@ function DayCell(props: { day: MinimapDay; fillColor: string }) {
 
   return (
     <div
-      className='rounded-sm border border-stone-200 relative'
+      className='relative ring-[0.5px] ring-inset ring-black/10 '
       style={{
         width: CELL_SIZE,
         height: CELL_SIZE,
@@ -88,7 +93,7 @@ function DayCell(props: { day: MinimapDay; fillColor: string }) {
 function TodayDot() {
   return (
     <div
-      className='absolute bg-stone-800 rounded-full'
+      className='absolute bg-brand-red rounded-full'
       style={{
         width: 3,
         height: 3,
@@ -190,4 +195,3 @@ function addDays(date: Date, days: number): Date {
 
   return result
 }
-

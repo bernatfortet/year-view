@@ -1,6 +1,8 @@
 import { Calendar, CheckCircle2, Plane, ExternalLink } from 'lucide-react'
 
-import { cn } from '../../lib/utils'
+import { cn } from '@/lib/utils'
+import { Row, Column } from '@/styles'
+
 import type { Trip } from './trip-utils'
 import { formatTripDateRange, getTripDisplayName } from './trip-utils'
 import { TripMinimap } from './TripMinimap'
@@ -26,23 +28,24 @@ export function TripCard(props: TripCardProps) {
         trip.isPast && 'opacity-50',
       )}
     >
-      <div className='flex items-start gap-3'>
+      <Row className='items-start gap-3'>
         <StatusIcon trip={trip} />
 
-        <div className='flex-1 min-w-0'>
-          <div className='flex items-center gap-2'>
-            <h3 className='font-semibold text-stone-900 truncate'>{displayName}</h3>
+        <Column className='flex-1 min-w-0'>
+          <Row className='items-center gap-2'>
+            <h3 className='font-semibold text-primary truncate'>{displayName}</h3>
             {trip.tripStatus === 'todo' && <TodoBadge />}
-            <ExternalLink className='size-3.5 text-stone-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0' />
-          </div>
+            {trip.tripStatus === 'pending' && <NeedsInfoBadge />}
+            <ExternalLink className='size-3.5 text-tertiary opacity-0 group-hover:opacity-100 transition-opacity shrink-0' />
+          </Row>
 
-          <p className='text-sm text-stone-500 mt-0.5'>{dateRange}</p>
+          <p className='text-sm text-tertiary mt-0.5'>{dateRange}</p>
 
           {trip.tripStatus === 'has-info' && trip.description && <FlightInfo description={trip.description} />}
-        </div>
+        </Column>
 
-        <TripMinimap startDate={trip.startDate} endDate={trip.endDate} backgroundColor={trip.backgroundColor} />
-      </div>
+        <TripMinimap startDate={trip.startDate} endDate={trip.endDate} tripStatus={trip.tripStatus} />
+      </Row>
     </a>
   )
 }
@@ -69,7 +72,7 @@ function StatusIcon(props: { trip: Trip }) {
   }
 
   return (
-    <div className='rounded-lg bg-stone-100 p-2 text-stone-600'>
+    <div className='rounded-lg bg-stone-100 p-2 text-tertiary'>
       <Calendar className={iconClasses} />
     </div>
   )
@@ -79,6 +82,14 @@ function TodoBadge() {
   return (
     <span className='inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 shrink-0'>
       Needs planning
+    </span>
+  )
+}
+
+function NeedsInfoBadge() {
+  return (
+    <span className='inline-flex items-center rounded-full bg-stone-100 px-2 py-0.5 text-xs font-medium text-tertiary shrink-0'>
+      Needs info
     </span>
   )
 }

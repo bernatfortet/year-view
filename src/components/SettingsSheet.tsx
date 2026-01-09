@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useStore } from '@nanostores/react'
 import { Settings } from 'lucide-react'
 
+import { Column } from '@/styles'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import {
@@ -35,9 +36,8 @@ export function SettingsSheet() {
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <SheetTrigger render={<Button variant='ghost' size='sm' className='gap-2' />}>
+      <SheetTrigger render={<Button variant='ghost' size='icon' title='Settings' />}>
         <Settings className='size-4' />
-        <span>Settings</span>
       </SheetTrigger>
 
       <SheetContent side='right'>
@@ -46,9 +46,9 @@ export function SettingsSheet() {
           <SheetDescription>Configure your calendar view preferences.</SheetDescription>
         </SheetHeader>
 
-        <div className='flex-1 p-6 space-y-6'>
+        <Column className='flex-1 p-6 space-y-6'>
           <ExcludeEventsSection inputValue={inputValue} onInputChange={setInputValue} />
-        </div>
+        </Column>
 
         <SheetFooter>
           <SheetClose render={<Button variant='outline' />}>Cancel</SheetClose>

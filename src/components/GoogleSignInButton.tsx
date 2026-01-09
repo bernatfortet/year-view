@@ -1,3 +1,5 @@
+import { Row, Column } from '@/styles'
+
 import { useAuth } from '../context/AuthContext'
 
 export function GoogleSignInButton() {
@@ -5,26 +7,26 @@ export function GoogleSignInButton() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-2 px-4 py-2 text-sm text-gray-400">
+      <Row className="items-center gap-2 px-4 py-2 text-sm text-gray-400">
         <LoadingSpinner />
         <span>Loading...</span>
-      </div>
+      </Row>
     )
   }
 
   if (isAuthenticated && user) {
     return (
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-linear-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-sm font-medium">
+      <Row className="items-center gap-3">
+        <Row className="items-center gap-2">
+          <Row className="w-8 h-8 rounded-full bg-linear-to-br from-blue-500 to-purple-600 items-center justify-center text-white text-sm font-medium">
             {user.name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || '?'}
-          </div>
+          </Row>
 
-          <div className="hidden sm:block">
+          <Column className="hidden sm:block">
             <p className="text-sm font-medium text-white">{user.name || 'User'}</p>
             <p className="text-xs text-gray-400">{user.email}</p>
-          </div>
-        </div>
+          </Column>
+        </Row>
 
         <button
           onClick={signOut}
@@ -32,7 +34,7 @@ export function GoogleSignInButton() {
         >
           Sign out
         </button>
-      </div>
+      </Row>
     )
   }
 

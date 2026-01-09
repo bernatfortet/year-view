@@ -1,5 +1,7 @@
 import { Plane } from 'lucide-react'
 
+import { Row } from '@/styles'
+
 interface FlightInfoProps {
   description: string
 }
@@ -29,7 +31,7 @@ export function FlightInfo(props: FlightInfoProps) {
 
   return (
     <div className='mt-3 rounded-lg border bg-stone-50 p-3'>
-      {flight.label && <div className='text-xs font-medium text-stone-500'>{flight.label}</div>}
+      {flight.label && <div className='text-xs font-medium text-tertiary'>{flight.label}</div>}
 
       <FlightRoute flight={flight} />
       <FlightTimes flight={flight} />
@@ -41,17 +43,17 @@ function FlightRoute(props: { flight: ParsedFlight }) {
   const { flight } = props
 
   return (
-    <div className='flex items-center justify-between mb-2'>
-      <span className='text-base font-semibold text-stone-900'>
+    <Row className='items-center justify-between mb-2'>
+      <span className='text-base font-semibold text-primary'>
         {flight.departureCity} to {flight.arrivalCity}
       </span>
-      <div className='flex items-center gap-1.5 text-sm text-stone-500'>
+      <Row className='items-center gap-1.5 text-sm text-tertiary'>
         <Plane className='size-3.5' />
         <span>
           {flight.airline} {flight.flightNumber}
         </span>
-      </div>
-    </div>
+      </Row>
+    </Row>
   )
 }
 
@@ -63,27 +65,27 @@ function FlightTimes(props: { flight: ParsedFlight }) {
   const arrivalDisplay = flight.arrivalDate ? `${flight.arrivalTime}, ${flight.arrivalDate}` : flight.arrivalTime
 
   return (
-    <div className='flex items-center gap-6 text-sm'>
-      <div className='flex items-center gap-2'>
+    <Row className='items-center gap-6 text-sm'>
+      <Row className='items-center gap-2'>
         <div className='rounded-full bg-stone-800 p-1'>
           <svg className='size-2.5 text-white' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='3'>
             <path d='M7 17L17 7M17 7H7M17 7V17' />
           </svg>
         </div>
-        <span className='text-stone-500'>{flight.departureCode}</span>
-        <span className='font-medium text-stone-900'>{departureDisplay}</span>
-      </div>
+        <span className='text-tertiary'>{flight.departureCode}</span>
+        <span className='font-medium text-primary'>{departureDisplay}</span>
+      </Row>
 
-      <div className='flex items-center gap-2'>
+      <Row className='items-center gap-2'>
         <div className='rounded-full bg-stone-800 p-1'>
           <svg className='size-2.5 text-white' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='3'>
             <path d='M7 7L17 17M17 17H7M17 17V7' />
           </svg>
         </div>
-        <span className='text-stone-500'>{flight.arrivalCode}</span>
-        <span className='font-medium text-stone-900'>{arrivalDisplay}</span>
-      </div>
-    </div>
+        <span className='text-tertiary'>{flight.arrivalCode}</span>
+        <span className='font-medium text-primary'>{arrivalDisplay}</span>
+      </Row>
+    </Row>
   )
 }
 
@@ -96,9 +98,9 @@ function RawDescription(props: { description: string }) {
   const hasMore = lines.length > 2
 
   return (
-    <div className='mt-2 text-sm text-stone-600 whitespace-pre-line'>
+    <div className='mt-2 text-sm text-tertiary whitespace-pre-line'>
       {preview}
-      {hasMore && <span className='text-stone-400'>...</span>}
+      {hasMore && <span className='text-tertiary'>...</span>}
     </div>
   )
 }

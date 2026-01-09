@@ -1,9 +1,8 @@
-import { RefreshCwIcon, SlidersHorizontalIcon } from "lucide-react"
-import { useStore } from "@nanostores/react"
+import { SlidersHorizontalIcon } from "lucide-react"
 
+import { Row, Column } from "@/styles"
 import { useAuth } from "@/context/AuthContext"
 import { useCalendars } from "@/context/CalendarContext"
-import { triggerEventsRefresh, $isSyncingEvents } from "@/stores/events.store"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Separator } from "@/components/ui/separator"
@@ -25,33 +24,16 @@ export function CalendarSidebar() {
     refreshCalendars,
   } = useCalendars()
 
-  const isSyncing = useStore($isSyncingEvents)
-
   const calendarsByAccount: CalendarsByAccount[] = user?.email
     ? [{ email: user.email, calendars }]
     : []
 
-  function handleRefresh() {
-    refreshCalendars()
-    triggerEventsRefresh()
-  }
-
   return (
-    <div className="flex h-full flex-col">
+    <Column className="h-full">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-4">
+      <Row className="items-center justify-between px-4 py-4">
         <h2 className="text-lg font-semibold">Calendars</h2>
-
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleRefresh}
-          disabled={isSyncing || isLoadingCalendars}
-        >
-          <RefreshCwIcon className={isSyncing || isLoadingCalendars ? 'animate-spin' : ''} />
-          <span className="sr-only">Refresh</span>
-        </Button>
-      </div>
+      </Row>
 
       <Separator />
 
@@ -89,7 +71,7 @@ export function CalendarSidebar() {
           calendarsByAccount.map((account) => (
             <div key={account.email} className="mb-4">
               {/* Account Header */}
-              <div className="flex items-center justify-between px-2 py-2">
+              <Row className="items-center justify-between px-2 py-2">
                 <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide truncate">
                   {account.email}
                 </span>
@@ -98,7 +80,7 @@ export function CalendarSidebar() {
                   <SlidersHorizontalIcon />
                   <span className="sr-only">Calendar settings</span>
                 </Button>
-              </div>
+              </Row>
 
               {/* Calendar Items */}
               <div className="space-y-0.5">
@@ -124,7 +106,7 @@ export function CalendarSidebar() {
           </Button>
         </div>
       )}
-    </div>
+    </Column>
   )
 }
 

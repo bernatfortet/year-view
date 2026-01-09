@@ -56,13 +56,23 @@ export interface MonthGridProps {
 }
 
 /**
+ * Tentative chunk boundary info for a day
+ */
+export interface TentativeInfo {
+  hasTentative: boolean
+  isFirstDay: boolean
+  isLastDay: boolean
+}
+
+/**
  * Props for the DayCell component
  */
 export interface DayCellProps {
   day: CalendarDay
   size: number
-  hasTentativeEvent?: boolean
+  tentativeInfo?: TentativeInfo
   birthdayEvents?: CalendarEvent[]
+  monthLabel?: string
 }
 
 /**

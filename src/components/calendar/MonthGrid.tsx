@@ -1,10 +1,19 @@
 import { useEffect, useRef } from 'react'
 
+import { Row } from '@/styles'
 import type { CalendarDay, CalendarEvent, MonthGridProps } from './types'
 import { DayCell } from './DayCell'
 import { EventBar } from './EventBar'
 import { $activeMonth } from './calendar.store'
-import { getMonthGridDays, getMonthName, groupDaysIntoWeeks, layoutEventsForWeek } from './utils'
+import {
+  getBirthdayEventsForDay,
+  getMonthGridDays,
+  getMonthName,
+  getTentativeInfoForDay,
+  groupDaysIntoWeeks,
+  isBirthdayEvent,
+  layoutEventsForWeek,
+} from './utils'
 
 export function MonthGrid({ year, month, events, daySize }: MonthGridProps) {
   const days = getMonthGridDays(year, month)
@@ -43,10 +52,10 @@ export function MonthGrid({ year, month, events, daySize }: MonthGridProps) {
   }, [month])
 
   return (
-    <div ref={ref} data-month={month} className='flex items-center gap-12'>
+    <Row ref={ref} data-month={month} className='items-center gap-12'>
       {/* Large Month Name - Left side */}
       <div
-        className={`w-56 text-right font-bold leading-none select-none ${isCurrentMonth ? 'text-stone-400' : 'text-stone-200'}`}
+        className={`w-56 text-right font-bold leading-none select-none ${isCurrentMonth ? 'text-brand-red' : 'text-month-label-inactive'}`}
         style={{ fontSize: '100px' }}
       >
         {monthName}
@@ -69,7 +78,7 @@ export function MonthGrid({ year, month, events, daySize }: MonthGridProps) {
                     key={day.dateString}
                     day={day}
                     size={daySize}
-                    hasTentativeEvent={dayHasTentativeEvent(day, events)}
+                    tentativeInfo={getTentativeInfoForDay(day, events)}
                     birthdayEvents={getBirthdayEventsForDay(day, events)}
                   />
                 ))}
@@ -93,39 +102,7 @@ export function MonthGrid({ year, month, events, daySize }: MonthGridProps) {
           )
         })}
       </div>
-    </div>
+    </Row>
   )
 }
 
-function dayHasTentativeEvent(day: CalendarDay, events: CalendarEvent[]): boolean {
-  const dateString = day.dateString
-
-  const hasTentative = events.some((event) => {
-    const hasQuestionMark = event.summary.includes('?')
-    const intersectsDay = event.startDate <= dateString && event.endDate > dateString
-
-    return hasQuestionMark && intersectsDay
-  })
-
-  return hasTentative
-}
-
-function getBirthdayEventsForDay(day: CalendarDay, events: CalendarEvent[]): CalendarEvent[] {
-  const dateString = day.dateString
-
-  const birthdayEvents = events.filter((event) => {
-    const intersectsDay = event.startDate <= dateString && event.endDate > dateString
-
-    return isBirthdayEvent(event) && intersectsDay
-  })
-
-  return birthdayEvents
-}
-
-const BIRTHDAY_KEYWORDS = ['birthday', 'bday', 'aniversario', 'aniversari']
-
-function isBirthdayEvent(event: CalendarEvent): boolean {
-  const summaryLower = event.summary.toLowerCase()
-
-  return BIRTHDAY_KEYWORDS.some((keyword) => summaryLower.includes(keyword))
-}
