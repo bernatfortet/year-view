@@ -49,52 +49,75 @@ function enrichTripWithStatus(event: CalendarEvent, today: Date): Trip {
 
 /**
  * Determines the status of a trip based on its title and description
- * - 'todo': Has "?" in the title (needs planning)
- * - 'has-info': Has a non-empty description (has flight/travel info)
+ * - 'has-info': Has a non-empty description (has flight/travel info) - takes priority
+ * - 'todo': Has "?" in the title (needs planning) but no description
  * - 'pending': Confirmed trip but no details yet
  */
 function determineTripStatus(event: CalendarEvent): TripStatus {
-  if (event.summary.includes('?')) return 'todo'
-  if (event.description && event.description.trim().length > 0) return 'has-info'
+  const hasQuestion = event.summary.includes('?')
+  const hasDescription = event.description && event.description.trim().length > 0
+  let status: TripStatus = 'pending'
 
-  return 'pending'
+  // Description takes priority - if we have flight info, show it regardless of "?"
+  if (hasDescription) status = 'has-info'
+  else if (hasQuestion) status = 'todo'
+
+  return status
 }
 
 /**
  * Checks if a trip has already ended
  */
 function checkIfPast(event: CalendarEvent, today: Date): boolean {
-  const endDate = new Date(event.endDate)
+  const endDate = parseDateString(event.endDate)
   const isPast = endDate < today
 
   return isPast
 }
 
 /**
- * Formats a trip's date range for display
+ * Formats a trip's date range for display with weekday names
+ * e.g., "Sun Feb 15 - Sun 22" or "Fri Feb 14 - Sun Mar 2"
  */
 export function formatTripDateRange(trip: Trip): string {
-  const start = new Date(trip.startDate)
-  const end = new Date(trip.endDate)
+  const start = parseDateString(trip.startDate)
+  const end = parseDateString(trip.endDate)
 
   // Google Calendar uses exclusive end dates, so subtract one day for display
   end.setDate(end.getDate() - 1)
 
-  const formatOptions: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' }
+  const fullFormat: Intl.DateTimeFormatOptions = { weekday: 'short', month: 'short', day: 'numeric' }
+  const weekdayOnly: Intl.DateTimeFormatOptions = { weekday: 'short' }
 
-  const startFormatted = start.toLocaleDateString('en-US', formatOptions)
-  const endFormatted = end.toLocaleDateString('en-US', formatOptions)
+  const startFormatted = start.toLocaleDateString('en-US', fullFormat)
+  const endFormatted = end.toLocaleDateString('en-US', fullFormat)
+  const endWeekday = end.toLocaleDateString('en-US', weekdayOnly)
 
   // If same day, just show one date
   if (start.getTime() === end.getTime()) return startFormatted
 
-  // If same month, show "Jan 15 - 22"
+  // If same month, show "Sun Feb 15 - Sun 22"
   if (start.getMonth() === end.getMonth()) {
-    return `${startFormatted} - ${end.getDate()}`
+    return `${startFormatted} - ${endWeekday} ${end.getDate()}`
   }
 
-  // Different months, show full range
+  // Different months, show full range "Fri Feb 14 - Sun Mar 2"
   return `${startFormatted} - ${endFormatted}`
+}
+
+/**
+ * Parses a date string (YYYY-MM-DD) as local date, not UTC.
+ * This avoids timezone issues where "2026-02-15" becomes Feb 14 in US timezones.
+ */
+function parseDateString(dateString: string): Date {
+  // If it's a date-only string (YYYY-MM-DD), parse as local
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+    const [year, month, day] = dateString.split('-').map(Number)
+    return new Date(year, month - 1, day)
+  }
+
+  // Otherwise use standard parsing (for datetime strings)
+  return new Date(dateString)
 }
 
 /**
@@ -116,4 +139,3 @@ export function getTripDisplayName(trip: Trip): string {
 
   return displayName || 'Unnamed Trip'
 }
-

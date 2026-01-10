@@ -22,7 +22,7 @@ code {
   --ink-primary: var(--brand-blue);
   --ink-secondary: #4d658f;
   --weekend-bg: oklch(0.97 0.005 85);
-  --month-label-inactive: oklch(0.92 0.005 85);
+  --month-label-inactive: oklch(0.19 0.055 259);
   --month-nav-inactive: oklch(0.85 0.01 85);
   --background: oklch(0.975 0.008 85);
   --background-app: oklch(0.965 0.012 80);

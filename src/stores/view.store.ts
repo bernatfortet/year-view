@@ -13,4 +13,3 @@ export const $activeView = atom<ViewType>('year')
 export function setActiveView(view: ViewType) {
   $activeView.set(view)
 }
-

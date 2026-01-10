@@ -10,7 +10,9 @@ import { HatchedPattern } from '@/components/ui/HatchedPattern'
 
 const DEFAULT_TENTATIVE_INFO: TentativeInfo = { hasTentative: false, isFirstDay: false, isLastDay: false }
 
-export function DayCell({ day, size, tentativeInfo = DEFAULT_TENTATIVE_INFO, birthdayEvents = [], monthLabel }: DayCellProps) {
+export function DayCell(props: DayCellProps) {
+  const { day, size, tentativeInfo = DEFAULT_TENTATIVE_INFO, birthdayEvents = [], monthLabel } = props
+
   if (!day.isCurrentMonth) {
     return <OutsideDayCell size={size} />
   }
@@ -20,15 +22,15 @@ export function DayCell({ day, size, tentativeInfo = DEFAULT_TENTATIVE_INFO, bir
 
   const bgClass = isWeekend ? 'bg-weekend-bg' : 'bg-white'
   const textClass = day.isToday ? '' : 'text-tertiary'
-  const todayBorder = day.isToday ? 'border-2 border-brand-red' : 'border-r border-b border-stone-200'
+  const gridBorderClasses = tentativeInfo.hasTentative ? '' : 'border-r border-b border-stone-200'
+  const borderClasses = day.isToday ? 'border-2 border-brand-red' : gridBorderClasses
   const baseClasses = 'items-start justify-between p-1 hover:bg-stone-50 hover:text-ink-primary'
   const dayNumberSize = size >= 80 ? 'lg' : size >= 60 ? 'md' : 'sm'
 
   return (
-    <Row className={`relative ${baseClasses} ${bgClass} ${textClass} ${todayBorder}`} style={{ width: size, height: size }}>
+    <Row className={`relative ${baseClasses} ${bgClass} ${textClass} ${borderClasses}`} style={{ width: size, height: size }}>
       {tentativeInfo.hasTentative && <HatchedPattern color='#fbbf24' strokeWidth={1} spacing={5} />}
       {tentativeInfo.hasTentative && <TentativeBorders tentativeInfo={tentativeInfo} />}
-      {monthLabel && <div className='absolute left-0 top-0 bottom-0 w-0.5 bg-brand-blue' style={{ left: '-1px' }} />}
       <Row className='relative z-10 items-center gap-1'>
         <DayNumber day={day.dayOfMonth} isToday={day.isToday} size={dayNumberSize} />
         {monthLabel && (

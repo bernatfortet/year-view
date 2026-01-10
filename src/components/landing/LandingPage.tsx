@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from '@tanstack/react-router'
 import { CalendarIcon, Grid3x3, Plane, Sparkles } from 'lucide-react'
 
 type Props = {
@@ -9,13 +10,18 @@ export function LandingPage(props: Props) {
   const { signIn } = props
 
   return (
-    <div className='min-h-screen bg-cover bg-center bg-no-repeat' style={{ backgroundImage: "url('/bkg.png')" }}>
-      <div className='absolute inset-0 border-5 rounded-[32px] border-brand-red' />
-      <div className='absolute inset-0 border-[18px] rounded-[24px] border-brand-red' />
-      <div className='absolute inset-0 border-5 border-brand-red' />
+    <div className='min-h-screen bg-brand-red'>
+      <div
+        className='absolute bg-cover bg-center bg-no-repeat z-0'
+        style={{
+          backgroundImage: "url('/bkg.png')",
+          inset: '8px',
+          borderRadius: '32px',
+        }}
+      />
 
       {/* Hero Section */}
-      <section className='pt-32 pb-12 px-6'>
+      <section className='pt-32 pb-12 px-6 relative z-1'>
         <div className='max-w-4xl mx-auto text-center'>
           {/* Title */}
           <h1 className='text-[72px] text-brand-blue mb-6' style={{ fontFamily: "'Instrument Serif', serif" }}>
@@ -40,9 +46,12 @@ export function LandingPage(props: Props) {
               <span className='font-medium'>Sign in with Google</span>
             </button>
 
-            <button className='inline-flex items-center gap-2 px-7 py-3.5 bg-black/10 backdrop-blur-sm text-gray-700 rounded-full hover:bg-black/15 transition-all'>
+            <Link
+              to='/try-demo'
+              className='inline-flex items-center gap-2 px-7 py-3.5 bg-black/10 backdrop-blur-sm text-gray-700 rounded-full hover:bg-black/15 transition-all'
+            >
               <span className='font-medium'>Try Demo</span>
-            </button>
+            </Link>
           </div>
 
           {/* Privacy & Terms */}
@@ -58,7 +67,7 @@ export function LandingPage(props: Props) {
       </section>
 
       {/* App Screenshot with Tabs */}
-      <section className='px-6 pb-12'>
+      <section className='px-6 pb-12 relative z-1'>
         <div className='max-w-4xl mx-auto'>
           <ScreenshotTabs />
         </div>
@@ -98,8 +107,14 @@ const SCREENSHOT_TABS: Array<{ id: ScreenshotTab; label: string; icon: React.Rea
 
 function ScreenshotTabs() {
   const [activeTab, setActiveTab] = useState<ScreenshotTab>('year')
+  const [failedImages, setFailedImages] = useState<Set<ScreenshotTab>>(new Set())
 
   const currentTab = SCREENSHOT_TABS.find((tab) => tab.id === activeTab) ?? SCREENSHOT_TABS[0]
+  const hasImageError = failedImages.has(activeTab)
+
+  function handleImageError() {
+    setFailedImages((prev) => new Set(prev).add(activeTab))
+  }
 
   return (
     <div className='rounded-xl overflow-hidden shadow-2xl bg-white'>
@@ -121,32 +136,33 @@ function ScreenshotTabs() {
 
       {/* Screenshot */}
       <div className='relative'>
-        <img
-          src={currentTab.screenshot}
-          alt={`${currentTab.label} screenshot`}
-          className='w-full h-auto'
-          onError={(event) => {
-            const target = event.currentTarget
-            target.style.display = 'none'
-            target.nextElementSibling?.classList.remove('hidden')
-          }}
-        />
+        {!hasImageError && (
+          <img
+            key={activeTab}
+            src={currentTab.screenshot}
+            alt={`${currentTab.label} screenshot`}
+            className='w-full h-auto'
+            onError={handleImageError}
+          />
+        )}
 
         {/* Fallback placeholder */}
-        <div className='hidden aspect-[16/10] flex items-center justify-center bg-gray-50'>
-          <div className='text-center text-gray-400'>
-            <svg className='w-16 h-16 mx-auto mb-3 opacity-50' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
-              <path
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                strokeWidth={1.5}
-                d='M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'
-              />
-            </svg>
-            <p className='text-sm'>{currentTab.label} screenshot</p>
-            <p className='text-xs mt-1 text-gray-300'>Add {currentTab.screenshot}</p>
+        {hasImageError && (
+          <div className='aspect-[16/10] flex items-center justify-center bg-gray-50'>
+            <div className='text-center text-gray-400'>
+              <svg className='w-16 h-16 mx-auto mb-3 opacity-50' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={1.5}
+                  d='M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'
+                />
+              </svg>
+              <p className='text-sm'>{currentTab.label} screenshot</p>
+              <p className='text-xs mt-1 text-gray-300'>Add {currentTab.screenshot}</p>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   )

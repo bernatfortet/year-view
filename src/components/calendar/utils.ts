@@ -90,6 +90,14 @@ export function getDayOfWeek(date: Date): number {
 }
 
 /**
+ * Check if a day index is a weekend day (Saturday or Sunday)
+ * Uses Monday-first convention: Saturday = 5, Sunday = 6
+ */
+export function isWeekendDay(dayIndex: number): boolean {
+  return dayIndex === 5 || dayIndex === 6
+}
+
+/**
  * Get the number of days in a month
  */
 export function getDaysInMonth(year: number, month: number): number {
@@ -377,6 +385,99 @@ export function getMonthName(month: number): string {
  */
 export function getWeekDayNames(): string[] {
   return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+}
+
+// --- Trip Detection & Flight Info ---
+
+export type TripType = 'flight' | 'car' | null
+
+export interface MinimalFlightInfo {
+  departureCode: string
+  departureTime: string
+  arrivalCode: string
+  arrivalTime: string
+}
+
+export interface TripInfo {
+  isTrip: boolean
+  tripType: TripType
+  returnFlight: MinimalFlightInfo | null
+}
+
+/**
+ * Detect if an event is a trip and extract trip info
+ */
+export function getTripInfo(event: { summary: string; description?: string }): TripInfo {
+  const summaryLower = event.summary.toLowerCase()
+  const isTrip = summaryLower.includes('trip')
+
+  if (!isTrip) {
+    return { isTrip: false, tripType: null, returnFlight: null }
+  }
+
+  const tripType = detectTripType(event.description)
+  const returnFlight = tripType === 'flight' ? parseReturnFlightInfo(event.description) : null
+
+  return { isTrip: true, tripType, returnFlight }
+}
+
+/**
+ * Detect if a trip is by flight or car based on description
+ */
+function detectTripType(description?: string): TripType {
+  if (!description) return null
+
+  const descLower = description.toLowerCase()
+
+  // Check for flight indicators
+  const hasFlightKeywords =
+    descLower.includes('flight:') ||
+    descLower.includes('departure:') ||
+    descLower.includes('arrival:') ||
+    /\b[A-Z]{2}\s*\d{3,4}\b/.test(description) // Airline code + flight number
+
+  if (hasFlightKeywords) return 'flight'
+
+  // Check for car/drive indicators
+  const hasCarKeywords = descLower.includes('drive') || descLower.includes('driving') || descLower.includes('road trip')
+
+  if (hasCarKeywords) return 'car'
+
+  return null
+}
+
+/**
+ * Parse minimal return flight info from description
+ * Returns first return flight leg info like: SFO 4:30pm → SJO 9:45pm
+ */
+function parseReturnFlightInfo(description?: string): MinimalFlightInfo | null {
+  if (!description) return null
+
+  // Look for the return section
+  const returnMatch = description.match(/return:\s*\n?([\s\S]*?)(?=\n\n|$)/i)
+  if (!returnMatch) return null
+
+  const returnSection = returnMatch[1]
+
+  // Parse the first flight in return section
+  const departureMatch = returnSection.match(/departure:\s*(?:.*?\s)?([A-Z]{3})\s+(\d{1,2}(?::\d{2})?\s*(?:am|pm))/i)
+  const arrivalMatch = returnSection.match(/arrival:\s*(?:.*?\s)?([A-Z]{3})\s+(\d{1,2}(?::\d{2})?\s*(?:am|pm))/i)
+
+  if (!departureMatch || !arrivalMatch) return null
+
+  return {
+    departureCode: departureMatch[1].toUpperCase(),
+    departureTime: departureMatch[2].toLowerCase().replace(/\s+/g, ''),
+    arrivalCode: arrivalMatch[1].toUpperCase(),
+    arrivalTime: arrivalMatch[2].toLowerCase().replace(/\s+/g, ''),
+  }
+}
+
+/**
+ * Format minimal flight info for display: "SFO 4:30pm → AUS 9:45pm"
+ */
+export function formatMinimalFlightInfo(flight: MinimalFlightInfo): string {
+  return `${flight.departureCode} ${flight.departureTime} → ${flight.arrivalCode} ${flight.arrivalTime}`
 }
 
 /**

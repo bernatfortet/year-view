@@ -1,6 +1,8 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react'
 
 import { useAuth } from './AuthContext'
+import { useDemoMode } from './DemoContext'
+import { demoCalendars } from '../data/demo-data'
 import type { GoogleCalendar } from '@/routes/api/calendar/list'
 
 const SELECTED_CALENDARS_KEY = 'year-view:selected-calendars'
@@ -24,6 +26,7 @@ interface CalendarProviderProps {
 
 export function CalendarProvider({ children }: CalendarProviderProps) {
   const { isAuthenticated } = useAuth()
+  const isDemoMode = useDemoMode()
 
   const [calendars, setCalendars] = useState<GoogleCalendar[]>([])
   const [selectedCalendarIds, setSelectedCalendarIds] = useState<Set<string>>(new Set())
@@ -31,15 +34,28 @@ export function CalendarProvider({ children }: CalendarProviderProps) {
   const [error, setError] = useState<string | null>(null)
   const [hasInitialized, setHasInitialized] = useState(false)
 
-  // Save selection to localStorage whenever it changes
+  // In demo mode, set up demo calendars immediately
   useEffect(() => {
-    if (!hasInitialized) return
+    if (!isDemoMode) return
+
+    setCalendars(demoCalendars)
+    setSelectedCalendarIds(new Set(demoCalendars.map((c) => c.id)))
+    setHasInitialized(true)
+    setIsLoadingCalendars(false)
+  }, [isDemoMode])
+
+  // Save selection to localStorage whenever it changes (skip in demo mode)
+  useEffect(() => {
+    if (!hasInitialized || isDemoMode) return
 
     saveSelectedCalendars(selectedCalendarIds)
-  }, [selectedCalendarIds, hasInitialized])
+  }, [selectedCalendarIds, hasInitialized, isDemoMode])
 
   // Fetch calendar list
   const refreshCalendars = useCallback(async () => {
+    // Skip API calls in demo mode
+    if (isDemoMode) return
+
     if (!isAuthenticated) {
       setCalendars([])
       setSelectedCalendarIds(new Set())
@@ -102,22 +118,26 @@ export function CalendarProvider({ children }: CalendarProviderProps) {
     } finally {
       setIsLoadingCalendars(false)
     }
-  }, [isAuthenticated, hasInitialized])
+  }, [isAuthenticated, hasInitialized, isDemoMode])
 
-  // Fetch calendars when auth state changes
+  // Fetch calendars when auth state changes (skip in demo mode)
   useEffect(() => {
+    if (isDemoMode) return
+
     refreshCalendars()
-  }, [refreshCalendars])
+  }, [refreshCalendars, isDemoMode])
 
-  // Reset state when user logs out
+  // Reset state when user logs out (skip in demo mode)
   useEffect(() => {
+    if (isDemoMode) return
+
     if (!isAuthenticated) {
       setCalendars([])
       setSelectedCalendarIds(new Set())
       setHasInitialized(false)
       setError(null)
     }
-  }, [isAuthenticated])
+  }, [isAuthenticated, isDemoMode])
 
   const toggleCalendar = useCallback((calendarId: string) => {
     setSelectedCalendarIds((prev) => {

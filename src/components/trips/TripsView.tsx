@@ -37,12 +37,7 @@ export function TripsView(props: TripsViewProps) {
       <Row className='items-center justify-between mb-6'>
         <h2 className='text-xl font-bold text-primary'>Trips in {year}</h2>
 
-        <TripFilterTabs
-          filter={filter}
-          onFilterChange={setFilter}
-          upcomingCount={upcomingTrips.length}
-          pastCount={pastTrips.length}
-        />
+        <TripFilterTabs filter={filter} onFilterChange={setFilter} upcomingCount={upcomingTrips.length} pastCount={pastTrips.length} />
       </Row>
 
       {displayedTrips.length === 0 ? (
@@ -111,13 +106,12 @@ function EmptyState(props: { year: number }) {
           <p>Events with "Trip" in the title appear here, organized by upcoming and past.</p>
 
           <div className='bg-stone-50 rounded-md px-3 py-2'>
-            <span className='text-tertiary'>Example:</span>{' '}
-            <span className='font-medium text-primary'>Trip to Japan</span>
+            <span className='text-tertiary'>Example:</span> <span className='font-medium text-primary'>Trip to Japan</span>
           </div>
 
           <p>
-            Trips have three states: with "?" shows "Needs planning", with a description shows flight/travel info,
-            without either shows "Needs info".
+            Trips have three states: with "?" shows "Needs planning", with a description shows flight/travel info, without either shows
+            "Needs info".
           </p>
 
           <p className='text-xs'>Add flight details in the event description to see them rendered.</p>
@@ -126,4 +120,3 @@ function EmptyState(props: { year: number }) {
     </Row>
   )
 }
-

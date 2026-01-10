@@ -1,7 +1,10 @@
+import { Plane, Car } from 'lucide-react'
+
 import { Row } from '@/styles'
 
 import type { EventBarProps } from './types'
 import { EVENT_COLORS } from './types'
+import { formatMinimalFlightInfo, getTripInfo } from './utils'
 
 export function EventBar({ event }: EventBarProps) {
   // Priority: event's own colorId > calendar's backgroundColor > default
@@ -21,6 +24,10 @@ export function EventBar({ event }: EventBarProps) {
   const marginLeft = event.continuesFromPrevious ? '' : 'ml-1'
   const marginRight = event.continuesAfter ? '' : 'mr-1'
 
+  // Trip detection
+  const tripInfo = getTripInfo(event)
+  const showReturnInfo = tripInfo.returnFlight && event.spanDays >= 3
+
   function handleClick() {
     if (event.htmlLink) {
       window.open(event.htmlLink, '_blank')
@@ -29,7 +36,7 @@ export function EventBar({ event }: EventBarProps) {
 
   return (
     <Row
-      className={`h-4 items-center px-1.5 text-[10px] font-medium ${textColor} truncate cursor-pointer hover:brightness-110 pointer-events-auto ${roundedLeft} ${roundedRight} ${marginLeft} ${marginRight}`}
+      className={`h-4 items-center gap-1 px-1.5 text-[10px] font-medium ${textColor} truncate cursor-pointer hover:brightness-110 pointer-events-auto ${roundedLeft} ${roundedRight} ${marginLeft} ${marginRight}`}
       style={{
         backgroundColor,
         gridColumn: `${gridColumnStart} / ${gridColumnEnd}`,
@@ -39,10 +46,32 @@ export function EventBar({ event }: EventBarProps) {
       onClick={handleClick}
     >
       {!event.continuesFromPrevious && (
-        <span className="truncate">{event.summary}</span>
+        <>
+          <TripIcon tripType={tripInfo.tripType} className={textColor} />
+          <span className='truncate'>{event.summary}</span>
+          {showReturnInfo && (
+            <span className='ml-auto opacity-70 text-[9px] shrink-0'>
+              ↩ {formatMinimalFlightInfo(tripInfo.returnFlight!)}
+            </span>
+          )}
+        </>
       )}
     </Row>
   )
+}
+
+type TripIconProps = {
+  tripType: 'flight' | 'car' | null
+  className?: string
+}
+
+function TripIcon(props: TripIconProps) {
+  const { tripType, className } = props
+
+  if (tripType === 'flight') return <Plane className={`size-2.5 shrink-0 ${className}`} />
+  if (tripType === 'car') return <Car className={`size-2.5 shrink-0 ${className}`} />
+
+  return null
 }
 
 function shouldUseWhiteText(hexColor: string): boolean {

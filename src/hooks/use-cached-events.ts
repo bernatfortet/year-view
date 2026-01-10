@@ -26,6 +26,7 @@ interface UseCachedEventsResult {
   allEvents: CalendarEvent[] // All fetched events
   isLoading: boolean
   isSyncing: boolean // True while fetching fresh data from Google Calendar
+  hasInitialized: boolean // True after first load attempt completes (cache or fetch)
   error: string | null
   refetch: () => void
 }
@@ -35,6 +36,7 @@ export function useCachedEvents(params: UseCachedEventsParams): UseCachedEventsR
 
   const [allEvents, setAllEvents] = useState<CalendarEvent[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [hasInitialized, setHasInitialized] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // Use global store for sync state so other components can access it
@@ -77,12 +79,11 @@ export function useCachedEvents(params: UseCachedEventsParams): UseCachedEventsR
     hasCachedDataRef.current = hasCache
 
     if (hasCache) {
-      console.log('📦 Loaded from cache:', cached.events.length, 'events')
       setAllEvents(cached.events)
+      setHasInitialized(true)
     }
 
     // Always fetch fresh data in background
-    console.log('🔄 Fetching fresh data...', { hasCache, showLoading: !hasCache })
 
     fetchEventsFromApi({
       year,
@@ -91,6 +92,7 @@ export function useCachedEvents(params: UseCachedEventsParams): UseCachedEventsR
       showLoading: !hasCache,
       setAllEvents,
       setIsLoading,
+      setHasInitialized,
       setError,
       hasCachedDataRef,
     })
@@ -104,8 +106,6 @@ export function useCachedEvents(params: UseCachedEventsParams): UseCachedEventsR
     if (refreshTrigger === initialTriggerRef.current) return
     if (!isAuthenticated || allCalendarIds.length === 0) return
 
-    console.log('🔄 Manual refresh triggered')
-
     fetchEventsFromApi({
       year,
       calendarIds: allCalendarIds,
@@ -113,6 +113,7 @@ export function useCachedEvents(params: UseCachedEventsParams): UseCachedEventsR
       showLoading: false,
       setAllEvents,
       setIsLoading,
+      setHasInitialized,
       setError,
       hasCachedDataRef,
     })
@@ -150,6 +151,7 @@ export function useCachedEvents(params: UseCachedEventsParams): UseCachedEventsR
       showLoading: false,
       setAllEvents,
       setIsLoading,
+      setHasInitialized,
       setError,
       hasCachedDataRef,
     })
@@ -160,6 +162,7 @@ export function useCachedEvents(params: UseCachedEventsParams): UseCachedEventsR
     allEvents,
     isLoading,
     isSyncing,
+    hasInitialized,
     error,
     refetch,
   }
@@ -211,6 +214,7 @@ async function fetchEventsFromApi(params: {
   showLoading: boolean
   setAllEvents: (events: CalendarEvent[]) => void
   setIsLoading: (loading: boolean) => void
+  setHasInitialized: (initialized: boolean) => void
   setError: (error: string | null) => void
   hasCachedDataRef: React.MutableRefObject<boolean>
 }) {
@@ -221,6 +225,7 @@ async function fetchEventsFromApi(params: {
     showLoading,
     setAllEvents,
     setIsLoading,
+    setHasInitialized,
     setError,
     hasCachedDataRef,
   } = params
@@ -250,8 +255,6 @@ async function fetchEventsFromApi(params: {
 
     const fetchedEvents = data.events || []
 
-    console.log('✅ Fetched fresh data:', fetchedEvents.length, 'events')
-
     setAllEvents(fetchedEvents)
     hasCachedDataRef.current = true
 
@@ -265,6 +268,7 @@ async function fetchEventsFromApi(params: {
     }
   } finally {
     setIsLoading(false)
+    setHasInitialized(true)
     $isSyncingEvents.set(false)
   }
 }

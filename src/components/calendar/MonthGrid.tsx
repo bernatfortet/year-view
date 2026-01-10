@@ -55,7 +55,7 @@ export function MonthGrid({ year, month, events, daySize }: MonthGridProps) {
     <Row ref={ref} data-month={month} className='items-center gap-12'>
       {/* Large Month Name - Left side */}
       <div
-        className={`w-56 text-right font-bold leading-none select-none ${isCurrentMonth ? 'text-brand-red' : 'text-month-label-inactive'}`}
+        className={`w-56 text-right font-bold leading-none select-none ${isCurrentMonth ? 'text-brand-red' : 'text-month-label-inactive/20'}`}
         style={{ fontSize: '100px' }}
       >
         {monthName}
@@ -105,4 +105,3 @@ export function MonthGrid({ year, month, events, daySize }: MonthGridProps) {
     </Row>
   )
 }
-

@@ -1,8 +1,9 @@
-import { HeadContent, Scripts, createRootRoute, Outlet } from '@tanstack/react-router'
+import { HeadContent, Scripts, createRootRoute, Outlet, useLocation } from '@tanstack/react-router'
 import { useStore } from '@nanostores/react'
 
 import { AuthProvider, useAuth } from '../context/AuthContext'
 import { CalendarProvider } from '../context/CalendarContext'
+import { DemoProvider, useDemoMode } from '../context/DemoContext'
 import { CalendarSidebar } from '../components/CalendarSidebar'
 import { GrainBackground } from '../components/GrainOverlay'
 import { Nav } from '../components/Nav'
@@ -75,20 +76,32 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
+  const location = useLocation()
+  const isDemoMode = location.pathname === '/try-demo'
+
   return (
     <AuthProvider>
-      <CalendarProvider>
-        <AppLayout />
-      </CalendarProvider>
+      <DemoProvider isDemoMode={isDemoMode}>
+        <CalendarProvider>
+          <AppLayout />
+        </CalendarProvider>
+      </DemoProvider>
     </AuthProvider>
   )
 }
 
 function AppLayout() {
   const sidebarOpen = useStore($sidebarOpen)
+  const location = useLocation()
   const { isAuthenticated, isLoading } = useAuth()
+  const isDemoMode = useDemoMode()
 
-  const showAppChrome = isAuthenticated && !isLoading
+  // Routes that should bypass app chrome entirely
+  const isStandalonePage = location.pathname.startsWith('/ai') || location.pathname === '/home'
+
+  // Show app chrome optimistically during loading (assume user might be authenticated)
+  // This allows Nav to appear immediately instead of waiting for auth check
+  const showAppChrome = !isStandalonePage && (isDemoMode || isAuthenticated || isLoading)
 
   return (
     <div className={`flex h-screen flex-col ${showAppChrome ? 'bg-background-app' : ''}`}>

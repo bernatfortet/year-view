@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react'
 
 interface User {
   email: string
@@ -24,6 +24,7 @@ interface AuthProviderProps {
 export function AuthProvider({ children, initialUser = null }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(initialUser)
   const [isLoading, setIsLoading] = useState(!initialUser)
+  const hasCheckedRef = useRef(false)
 
   const refreshSession = useCallback(async () => {
     try {
@@ -35,12 +36,7 @@ export function AuthProvider({ children, initialUser = null }: AuthProviderProps
 
       if (response.ok) {
         const data = await response.json()
-
-        if (data.user) {
-          setUser(data.user)
-        } else {
-          setUser(null)
-        }
+        setUser(data.user || null)
       } else {
         setUser(null)
       }
@@ -52,11 +48,17 @@ export function AuthProvider({ children, initialUser = null }: AuthProviderProps
     }
   }, [])
 
-  // Check session on mount
+  // Check session ONCE on mount - client only
   useEffect(() => {
-    if (!initialUser) {
-      refreshSession()
-    }
+    // Skip on server
+    if (typeof window === 'undefined') return
+    // Skip if already checked
+    if (hasCheckedRef.current) return
+    // Skip if we have initial user
+    if (initialUser) return
+
+    hasCheckedRef.current = true
+    refreshSession()
   }, [initialUser, refreshSession])
 
   const signIn = useCallback(() => {

@@ -1,11 +1,26 @@
-import { CircleHelp, Gift, type LucideIcon, SparklesIcon, Plane } from 'lucide-react'
+import { CircleHelp, Gift, type LucideIcon, SparklesIcon, Plane, Car, Mail } from 'lucide-react'
 import { useState } from 'react'
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Column, Row } from '@/styles'
 import { cn } from '@/lib/utils'
 
-const BEHAVIORS = [
+interface BehaviorSection {
+  title: string
+  content: string
+}
+
+interface Behavior {
+  id: string
+  icon: LucideIcon
+  title: string
+  description: string
+  example: string
+  result?: string
+  sections?: BehaviorSection[]
+}
+
+const BEHAVIORS: Behavior[] = [
   {
     id: 'tentative',
     icon: CircleHelp,
@@ -28,9 +43,26 @@ const BEHAVIORS = [
     title: 'Trips',
     description: 'Events with "Trip" in the title appear in a dedicated Trips tab, organized by upcoming and past.',
     example: 'Trip to Japan',
-    result: 'Trips have three states: with "?" shows "Needs planning", with a description shows flight/travel info, without either shows "Needs info". Add flight details in the event description to see them rendered.',
+    sections: [
+      {
+        title: 'Trip States',
+        content: 'Trips show badges based on their state: "Needs planning" (has ?), "Needs info" (no description), or full flight details (has description).',
+      },
+      {
+        title: 'Icons',
+        content: 'Events with "Car" in the title show a car icon instead of a plane.',
+      },
+      {
+        title: 'Flight Info Format',
+        content: 'Add flight details in the description using: Flight: AA 123, Departure: City CODE time, date, Arrival: City CODE time, date.',
+      },
+      {
+        title: 'Email Links',
+        content: 'Gmail links in the description appear as a "View Email" button in the trip header.',
+      },
+    ],
   },
-] as const
+]
 
 type BehaviorId = (typeof BEHAVIORS)[number]['id']
 
@@ -38,7 +70,7 @@ export function MagicBehaviors() {
   const [open, setOpen] = useState(false)
   const [selectedId, setSelectedId] = useState<BehaviorId>('tentative')
 
-  const selectedBehavior = BEHAVIORS.find((b) => b.id === selectedId)!
+  const selectedBehavior = BEHAVIORS.find((b) => b.id === selectedId) as Behavior
 
   return (
     <>
@@ -51,8 +83,8 @@ export function MagicBehaviors() {
       </button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className='max-w-xl p-0 overflow-hidden'>
-          <Row className='min-h-[320px]'>
+        <DialogContent className='max-w-xl p-0 overflow-hidden h-[500px]'>
+          <Row className='h-full'>
             <Column className='w-48 shrink-0 border-r border-stone-200 bg-stone-50 p-4'>
               <DialogHeader className='mb-4'>
                 <DialogTitle className='flex items-center gap-2 text-base'>
@@ -74,7 +106,7 @@ export function MagicBehaviors() {
               </Column>
             </Column>
 
-            <Column className='flex-1 p-6'>
+            <Column className='flex-1 p-6 overflow-y-auto'>
               <BehaviorDetail behavior={selectedBehavior} />
             </Column>
           </Row>
@@ -108,8 +140,6 @@ function BehaviorNavItem(props: BehaviorNavItemProps) {
   )
 }
 
-type Behavior = (typeof BEHAVIORS)[number]
-
 function BehaviorDetail(props: { behavior: Behavior }) {
   const { behavior } = props
   const Icon = behavior.icon
@@ -127,7 +157,18 @@ function BehaviorDetail(props: { behavior: Behavior }) {
         <span className='text-tertiary'>Example:</span> <span className='font-medium text-primary'>{behavior.example}</span>
       </div>
 
-      <p className='text-sm text-tertiary leading-relaxed'>{behavior.result}</p>
+      {behavior.result && <p className='text-sm text-tertiary leading-relaxed'>{behavior.result}</p>}
+
+      {behavior.sections && (
+        <Column className='gap-3 pt-2 border-t border-stone-200'>
+          {behavior.sections.map((section) => (
+            <div key={section.title}>
+              <h4 className='text-xs font-semibold text-primary mb-1'>{section.title}</h4>
+              <p className='text-xs text-tertiary leading-relaxed'>{section.content}</p>
+            </div>
+          ))}
+        </Column>
+      )}
     </Column>
   )
 }

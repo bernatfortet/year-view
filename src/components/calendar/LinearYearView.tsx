@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useStore } from '@nanostores/react'
+import { Plane, Car } from 'lucide-react'
 
 import { Row } from '@/styles'
 import type { CalendarDay, CalendarEvent, TentativeInfo, YearViewProps } from './types'
@@ -7,7 +8,15 @@ import { EVENT_COLORS } from './types'
 import { DayCell } from './DayCell'
 import { WeekdayHeader } from './WeekdayHeader'
 import { $isSyncingEvents } from '@/stores/events.store'
-import { formatDateString, getDayOfWeek, getMonthName, isBirthdayEvent, parseDateString } from './utils'
+import {
+  formatDateString,
+  formatMinimalFlightInfo,
+  getDayOfWeek,
+  getMonthName,
+  getTripInfo,
+  isBirthdayEvent,
+  parseDateString,
+} from './utils'
 
 const MIN_CELL_SIZE = 60
 
@@ -234,15 +243,7 @@ function LinearDayCell(props: LinearDayCellProps) {
 
   const monthLabel = isFirstOfMonth ? getMonthName(day.month).toUpperCase() : undefined
 
-  return (
-    <DayCell
-      day={calendarDay}
-      size={cellSize}
-      tentativeInfo={tentativeInfo}
-      birthdayEvents={birthdayEvents}
-      monthLabel={monthLabel}
-    />
-  )
+  return <DayCell day={calendarDay} size={cellSize} tentativeInfo={tentativeInfo} birthdayEvents={birthdayEvents} monthLabel={monthLabel} />
 }
 
 // --- Event Bar Segments ---
@@ -474,6 +475,11 @@ function EventBarSegment(props: EventBarSegmentProps) {
 
   const textColor = shouldUseWhiteText(backgroundColor) ? 'text-white' : 'text-black'
 
+  // Trip detection
+  const tripInfo = getTripInfo(event)
+  const spanDays = gridColumnEnd - gridColumnStart
+  const showReturnInfo = tripInfo.returnFlight && spanDays >= 4 && width > 300
+
   function handleClick() {
     if (event.htmlLink) {
       window.open(event.htmlLink, '_blank')
@@ -498,14 +504,37 @@ function EventBarSegment(props: EventBarSegmentProps) {
           borderRadius: isStart && isEnd ? 4 : isStart ? '4px 0 0 4px' : isEnd ? '0 4px 4px 0' : 0,
           display: 'flex',
           alignItems: 'center',
+          gap: 4,
           height: BAR_HEIGHT,
         }}
         title={event.summary}
       >
-        {isStart && <span className='truncate'>{event.summary}</span>}
+        {isStart && (
+          <>
+            <TripIcon tripType={tripInfo.tripType} className={textColor} />
+            <span className='truncate'>{event.summary}</span>
+            {showReturnInfo && (
+              <span className='ml-auto opacity-70 text-[9px] shrink-0'>↩ {formatMinimalFlightInfo(tripInfo.returnFlight!)}</span>
+            )}
+          </>
+        )}
       </div>
     </div>
   )
+}
+
+type TripIconProps = {
+  tripType: 'flight' | 'car' | null
+  className?: string
+}
+
+function TripIcon(props: TripIconProps) {
+  const { tripType, className } = props
+
+  if (tripType === 'flight') return <Plane className={`size-2.5 shrink-0 ${className}`} />
+  if (tripType === 'car') return <Car className={`size-2.5 shrink-0 ${className}`} />
+
+  return null
 }
 
 function shouldUseWhiteText(hexColor: string): boolean {

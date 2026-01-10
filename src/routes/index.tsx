@@ -7,6 +7,7 @@ import { LinearYearView } from '../components/calendar/LinearYearView'
 import { TripsView } from '../components/trips/TripsView'
 import { LandingPage } from '../components/landing/LandingPage'
 import { LoadingState } from '../components/states/LoadingState'
+import { LoadingEventsOverlay } from '../components/states/LoadingEventsOverlay'
 import { ErrorState } from '../components/states/ErrorState'
 import { NoCalendarsState } from '../components/states/NoCalendarsState'
 import { useAuth } from '../context/AuthContext'
@@ -29,20 +30,27 @@ function HomePage() {
   const allCalendarIds = useMemo(() => calendars.map((c) => c.id), [calendars])
   const selectedIds = useMemo(() => Array.from(selectedCalendarIds), [selectedCalendarIds])
 
-  const { events, error } = useCachedEvents({
+  const { events, hasInitialized: eventsInitialized, error } = useCachedEvents({
     year,
     allCalendarIds,
     selectedCalendarIds: selectedIds,
     isAuthenticated,
   })
 
-  if (authLoading || (isLoadingCalendars && calendars.length === 0)) return <LoadingState />
-  if (!isAuthenticated) return <LandingPage signIn={signIn} />
-  if (selectedIds.length === 0) return <NoCalendarsState />
+  // After auth check completes, show landing page if not authenticated
+  if (!authLoading && !isAuthenticated) return <LandingPage signIn={signIn} />
+
+  // User is authenticated (or still loading) - show calendar with appropriate states
+  if (!isLoadingCalendars && selectedIds.length === 0 && !authLoading) return <NoCalendarsState />
   if (error) return <ErrorState error={error} />
+
+  // Show loading overlay while auth, calendars, or events are loading
+  const showLoadingOverlay = authLoading || isLoadingCalendars || (selectedIds.length > 0 && !eventsInitialized)
 
   return (
     <div className='relative'>
+      {showLoadingOverlay && <LoadingEventsOverlay />}
+
       {activeView === 'year' && <YearView year={year} events={events} />}
       {activeView === 'linear' && <LinearYearView year={year} events={events} />}
       {activeView === 'trips' && <TripsView events={events} year={year} />}
