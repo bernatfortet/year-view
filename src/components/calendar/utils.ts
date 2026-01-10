@@ -38,24 +38,12 @@ export function getTentativeInfoForDay(day: CalendarDay, events: CalendarEvent[]
   const lastDayString = getDateBefore(tentativeEvent.endDate)
   const isLastDay = lastDayString === dateString
 
-  // #region agent log
-  if (tentativeEvent.summary.toLowerCase().includes('local')) {
-    fetch('http://127.0.0.1:7244/ingest/44d643b7-d61e-4a68-a9b3-dbd654ca02e3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'utils.ts:getTentativeInfoForDay',message:'Tentative info computed',data:{dateString,eventSummary:tentativeEvent.summary,startDate:tentativeEvent.startDate,endDate:tentativeEvent.endDate,lastDayString,isFirstDay,isLastDay},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'A-B'})}).catch(()=>{});
-  }
-  // #endregion
-
   return { hasTentative: true, isFirstDay, isLastDay }
 }
 
 function getDateBefore(dateString: string): string {
   const date = new Date(dateString)
-  // #region agent log
-  const beforeSetDate = { input: dateString, parsed: date.toISOString(), getDate: date.getDate(), localString: date.toString() }
-  // #endregion
   date.setDate(date.getDate() - 1)
-  // #region agent log
-  fetch('http://127.0.0.1:7244/ingest/44d643b7-d61e-4a68-a9b3-dbd654ca02e3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'utils.ts:getDateBefore',message:'Date subtraction',data:{...beforeSetDate,afterSetDate:date.getDate(),result:formatDateString(date)},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'D'})}).catch(()=>{});
-  // #endregion
   return formatDateString(date)
 }
 
