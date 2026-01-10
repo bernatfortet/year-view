@@ -13,6 +13,29 @@ const DEFAULT_TENTATIVE_INFO: TentativeInfo = { hasTentative: false, isFirstDay:
 export function DayCell(props: DayCellProps) {
   const { day, size, tentativeInfo = DEFAULT_TENTATIVE_INFO, birthdayEvents = [], monthLabel } = props
 
+  // #region agent log
+  if (tentativeInfo.hasTentative) {
+    fetch('http://127.0.0.1:7244/ingest/44d643b7-d61e-4a68-a9b3-dbd654ca02e3', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        location: 'DayCell.tsx:render',
+        message: 'Tentative day rendering',
+        data: {
+          dateString: day.dateString,
+          dayOfMonth: day.dayOfMonth,
+          hasTentative: tentativeInfo.hasTentative,
+          isFirstDay: tentativeInfo.isFirstDay,
+          isLastDay: tentativeInfo.isLastDay,
+        },
+        timestamp: Date.now(),
+        sessionId: 'debug-session',
+        hypothesisId: 'E',
+      }),
+    }).catch(() => {})
+  }
+  // #endregion
+
   if (!day.isCurrentMonth) {
     return <OutsideDayCell size={size} />
   }
