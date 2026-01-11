@@ -39,13 +39,8 @@ function getGoogleClientSecret(): string {
 }
 
 function getGoogleRedirectUri(request: Request): string {
-  // Prefer environment variable if set (for explicit configuration)
-  const envRedirectUri = process.env.GOOGLE_REDIRECT_URI
-  if (envRedirectUri) {
-    return envRedirectUri
-  }
-
-  // Otherwise, dynamically determine from request origin
+  // Dynamically determine from request origin
+  // This ensures the redirect URI always matches the current domain
   const url = new URL(request.url)
   const origin = url.origin
   const redirectUri = `${origin}/api/auth/callback/google`
