@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { CalendarIcon, Grid3x3, Plane, Sparkles } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 type Props = {
   signIn: () => void
@@ -38,13 +39,13 @@ export function LandingPage(props: Props) {
 
           {/* Buttons */}
           <div className='flex items-center justify-center gap-4 mb-6'>
-            <button
+            <Button
               onClick={signIn}
               className='inline-flex items-center gap-3 px-7 py-3.5 bg-white/90 backdrop-blur-sm text-gray-800 rounded-full hover:bg-white transition-all shadow-sm'
             >
               <GoogleIcon />
               <span className='font-medium'>Sign in with Google</span>
-            </button>
+            </Button>
 
             <Link
               to='/try-demo'
@@ -124,7 +125,7 @@ function ScreenshotTabs() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 flex items-center justify-center gap-2 px-4 py-4 text-sm font-medium transition-colors ${
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-4 text-sm font-medium transition-colors cursor-pointer ${
               activeTab === tab.id ? 'text-brand-red border-b-2 border-brand-red -mb-px' : 'text-gray-500 hover:text-gray-700'
             }`}
           >
