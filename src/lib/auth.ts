@@ -42,15 +42,15 @@ function getGoogleRedirectUri(request: Request): string {
   // Dynamically determine from request origin
   // Normalize to non-www version to ensure consistency
   const url = new URL(request.url)
-  let hostname = url.hostname
+  let host = url.host // includes port if non-standard (e.g. localhost:3000)
 
   // Remove www. prefix if present to normalize to canonical domain
-  if (hostname.startsWith('www.')) {
-    hostname = hostname.slice(4)
+  if (host.startsWith('www.')) {
+    host = host.slice(4)
   }
 
   const protocol = url.protocol
-  const origin = `${protocol}//${hostname}`
+  const origin = `${protocol}//${host}`
   const redirectUri = `${origin}/api/auth/callback/google`
 
   return redirectUri
