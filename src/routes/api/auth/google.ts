@@ -1,20 +1,15 @@
 import { createFileRoute } from '@tanstack/react-router'
-import {
-  getGoogleAuthUrl,
-  generateState,
-  STATE_COOKIE_NAME,
-  STATE_COOKIE_OPTIONS,
-} from '../../../lib/auth'
+import { getGoogleAuthUrl, generateState, STATE_COOKIE_NAME, STATE_COOKIE_OPTIONS } from '../../../lib/auth'
 
 export const Route = createFileRoute('/api/auth/google')({
   server: {
     handlers: {
-      GET: () => {
+      GET: ({ request }) => {
         // Generate a random state for CSRF protection
         const state = generateState()
 
         // Get the Google OAuth URL
-        const authUrl = getGoogleAuthUrl(state)
+        const authUrl = getGoogleAuthUrl({ state, request })
 
         // Build cookie string
         const cookieParts = [

@@ -15,12 +15,7 @@ const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
 const GOOGLE_USERINFO_URL = 'https://www.googleapis.com/oauth2/v2/userinfo'
 
 // Required scopes for Google Calendar read access
-const SCOPES = [
-  'openid',
-  'email',
-  'profile',
-  'https://www.googleapis.com/auth/calendar.readonly',
-].join(' ')
+const SCOPES = ['openid', 'email', 'profile', 'https://www.googleapis.com/auth/calendar.readonly'].join(' ')
 
 /**
  * Environment variable getters with validation
@@ -43,8 +38,19 @@ function getGoogleClientSecret(): string {
   return getEnvVar('GOOGLE_CLIENT_SECRET')
 }
 
-function getGoogleRedirectUri(): string {
-  return getEnvVar('GOOGLE_REDIRECT_URI')
+function getGoogleRedirectUri(request: Request): string {
+  // Prefer environment variable if set (for explicit configuration)
+  const envRedirectUri = process.env.GOOGLE_REDIRECT_URI
+  if (envRedirectUri) {
+    return envRedirectUri
+  }
+
+  // Otherwise, dynamically determine from request origin
+  const url = new URL(request.url)
+  const origin = url.origin
+  const redirectUri = `${origin}/api/auth/callback/google`
+
+  return redirectUri
 }
 
 function getSessionSecret(): string {
@@ -54,10 +60,13 @@ function getSessionSecret(): string {
 /**
  * Generates the Google OAuth authorization URL
  */
-export function getGoogleAuthUrl(state: string): string {
-  const params = new URLSearchParams({
+export function getGoogleAuthUrl(params: { state: string; request: Request }): string {
+  const { state, request } = params
+  const redirectUri = getGoogleRedirectUri(request)
+
+  const urlParams = new URLSearchParams({
     client_id: getGoogleClientId(),
-    redirect_uri: getGoogleRedirectUri(),
+    redirect_uri: redirectUri,
     response_type: 'code',
     scope: SCOPES,
     state,
@@ -65,7 +74,7 @@ export function getGoogleAuthUrl(state: string): string {
     prompt: 'consent', // Force consent to always get refresh token
   })
 
-  return `${GOOGLE_AUTH_URL}?${params.toString()}`
+  return `${GOOGLE_AUTH_URL}?${urlParams.toString()}`
 }
 
 /**
@@ -96,11 +105,14 @@ interface GoogleUserInfo {
 /**
  * Exchanges an authorization code for access and refresh tokens
  */
-export async function exchangeCodeForTokens(code: string): Promise<{
+export async function exchangeCodeForTokens(params: { code: string; request: Request }): Promise<{
   accessToken: string
   refreshToken: string
   expiresIn: number
 }> {
+  const { code, request } = params
+  const redirectUri = getGoogleRedirectUri(request)
+
   const response = await fetch(GOOGLE_TOKEN_URL, {
     method: 'POST',
     headers: {
@@ -110,7 +122,7 @@ export async function exchangeCodeForTokens(code: string): Promise<{
       code,
       client_id: getGoogleClientId(),
       client_secret: getGoogleClientSecret(),
-      redirect_uri: getGoogleRedirectUri(),
+      redirect_uri: redirectUri,
       grant_type: 'authorization_code',
     }),
   })
@@ -191,7 +203,7 @@ export function createSessionCookie(
   refreshToken: string,
   expiresIn: number,
   userEmail?: string,
-  userName?: string
+  userName?: string,
 ): string {
   const session: SessionData = {
     accessToken,
@@ -264,9 +276,7 @@ export function getSessionFromRequest(request: Request): {
     return { session: null, user: null }
   }
 
-  const user = session.userEmail
-    ? { email: session.userEmail, name: session.userName || '' }
-    : null
+  const user = session.userEmail ? { email: session.userEmail, name: session.userName || '' } : null
 
   return { session, user }
 }
@@ -296,13 +306,7 @@ export async function getAccessTokenFromRequest(request: Request): Promise<{
     const { accessToken, expiresIn } = await refreshAccessToken(session.refreshToken)
 
     // Create new session cookie with refreshed token
-    const newSessionCookie = createSessionCookie(
-      accessToken,
-      session.refreshToken,
-      expiresIn,
-      session.userEmail,
-      session.userName
-    )
+    const newSessionCookie = createSessionCookie(accessToken, session.refreshToken, expiresIn, session.userEmail, session.userName)
 
     return { accessToken, newSessionCookie }
   } catch {
@@ -313,11 +317,4 @@ export async function getAccessTokenFromRequest(request: Request): Promise<{
 /**
  * Export cookie utilities for use in routes
  */
-export {
-  generateState,
-  SESSION_COOKIE_NAME,
-  SESSION_COOKIE_OPTIONS,
-  STATE_COOKIE_NAME,
-  STATE_COOKIE_OPTIONS,
-}
-
+export { generateState, SESSION_COOKIE_NAME, SESSION_COOKIE_OPTIONS, STATE_COOKIE_NAME, STATE_COOKIE_OPTIONS }

@@ -56,19 +56,13 @@ export const Route = createFileRoute('/api/auth/callback/google')({
 
         try {
           // Exchange the authorization code for tokens
-          const { accessToken, refreshToken, expiresIn } = await exchangeCodeForTokens(code)
+          const { accessToken, refreshToken, expiresIn } = await exchangeCodeForTokens({ code, request })
 
           // Fetch user info
           const userInfo = await fetchUserInfo(accessToken)
 
           // Create encrypted session cookie
-          const sessionValue = createSessionCookie(
-            accessToken,
-            refreshToken,
-            expiresIn,
-            userInfo.email,
-            userInfo.name
-          )
+          const sessionValue = createSessionCookie(accessToken, refreshToken, expiresIn, userInfo.email, userInfo.name)
 
           // Build session cookie string
           const sessionCookieParts = [
@@ -129,5 +123,3 @@ function parseCookies(cookieHeader: string): Record<string, string> {
 
   return cookies
 }
-
-
