@@ -40,9 +40,17 @@ function getGoogleClientSecret(): string {
 
 function getGoogleRedirectUri(request: Request): string {
   // Dynamically determine from request origin
-  // This ensures the redirect URI always matches the current domain
+  // Normalize to non-www version to ensure consistency
   const url = new URL(request.url)
-  const origin = url.origin
+  let hostname = url.hostname
+
+  // Remove www. prefix if present to normalize to canonical domain
+  if (hostname.startsWith('www.')) {
+    hostname = hostname.slice(4)
+  }
+
+  const protocol = url.protocol
+  const origin = `${protocol}//${hostname}`
   const redirectUri = `${origin}/api/auth/callback/google`
 
   return redirectUri
