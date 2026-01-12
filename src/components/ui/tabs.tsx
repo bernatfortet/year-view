@@ -19,7 +19,7 @@ const tabsListVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-foreground/10 backdrop-blur-sm dark:bg-white/5 dark:ring-white/10 ring-1',
+        default: 'bg-black/5 backdrop-blur-sm ring-black/10 dark:bg-white/5 dark:ring-white/10 ring-1',
         line: 'gap-1 bg-transparent',
       },
     },
