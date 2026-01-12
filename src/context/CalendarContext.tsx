@@ -7,10 +7,27 @@ import type { GoogleCalendar } from '@/routes/api/calendar/list'
 
 const SELECTED_CALENDARS_KEY = 'year-view:selected-calendars'
 
+function getInitialSelectedCalendarIds(): Set<string> {
+  if (typeof window === 'undefined') {
+    const result = new Set<string>()
+    return result
+  }
+
+  const savedSelection = loadSelectedCalendars()
+  if (!savedSelection || savedSelection.length === 0) {
+    const result = new Set<string>()
+    return result
+  }
+
+  const result = new Set<string>(savedSelection)
+  return result
+}
+
 interface CalendarContextType {
   calendars: GoogleCalendar[]
   selectedCalendarIds: Set<string>
   isLoadingCalendars: boolean
+  hasInitialized: boolean
   error: string | null
   toggleCalendar: (calendarId: string) => void
   selectAll: () => void
@@ -29,7 +46,7 @@ export function CalendarProvider({ children }: CalendarProviderProps) {
   const isDemoMode = useDemoMode()
 
   const [calendars, setCalendars] = useState<GoogleCalendar[]>([])
-  const [selectedCalendarIds, setSelectedCalendarIds] = useState<Set<string>>(new Set())
+  const [selectedCalendarIds, setSelectedCalendarIds] = useState<Set<string>>(() => getInitialSelectedCalendarIds())
   const [isLoadingCalendars, setIsLoadingCalendars] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [hasInitialized, setHasInitialized] = useState(false)
@@ -86,9 +103,7 @@ export function CalendarProvider({ children }: CalendarProviderProps) {
 
         if (savedSelection) {
           // Filter saved selection to only include valid calendar IDs
-          const restoredSelection = new Set(
-            savedSelection.filter((id) => validCalendarIds.has(id))
-          )
+          const restoredSelection = new Set(savedSelection.filter((id) => validCalendarIds.has(id)))
 
           // Use restored selection if it has any valid calendars
           if (restoredSelection.size > 0) {
@@ -165,6 +180,7 @@ export function CalendarProvider({ children }: CalendarProviderProps) {
     calendars,
     selectedCalendarIds,
     isLoadingCalendars,
+    hasInitialized,
     error,
     toggleCalendar,
     selectAll,

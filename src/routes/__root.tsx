@@ -1,8 +1,11 @@
 import { HeadContent, Scripts, createRootRoute, Outlet, useLocation } from '@tanstack/react-router'
+import { createServerFn } from '@tanstack/react-start'
+import { getCookie } from '@tanstack/react-start/server'
 import { useStore } from '@nanostores/react'
 
-import { AuthProvider, useAuth } from '../context/AuthContext'
+import { AuthProvider, useAuth, getWasAuthenticated } from '../context/AuthContext'
 import { CalendarProvider } from '../context/CalendarContext'
+import { parseSessionCookie } from '../lib/auth'
 import { DemoProvider, useDemoMode } from '../context/DemoContext'
 import { CalendarSidebar } from '../components/CalendarSidebar'
 import { GrainBackground } from '../components/GrainOverlay'
@@ -12,10 +15,32 @@ import appCss from '../styles.css?url'
 
 const APP_URL = 'https://yeartrips.com'
 const APP_TITLE = 'YearTrips - Year View Calendar'
-const APP_DESCRIPTION =
-  'See your whole year at a glance. Organize trips, vacations, school calendar, and events in a beautiful year view.'
+const APP_DESCRIPTION = 'See your whole year at a glance. Organize trips, vacations, school calendar, and events in a beautiful year view.'
+
+// Read localStorage IMMEDIATELY at module load to avoid flash
+const INITIAL_WAS_AUTHENTICATED = getWasAuthenticated()
+
+// Server function to get user from session cookie
+const getServerUser = createServerFn({ method: 'GET' }).handler(async () => {
+  try {
+    const sessionCookie = getCookie('year_view_session')
+    if (!sessionCookie) return null
+
+    const session = parseSessionCookie(sessionCookie)
+    if (!session?.userEmail) return null
+
+    const user = { email: session.userEmail, name: session.userName || '' }
+    return user
+  } catch (err) {
+    return null
+  }
+})
 
 export const Route = createRootRoute({
+  loader: async () => {
+    const user = await getServerUser()
+    return { initialUser: user }
+  },
   head: () => ({
     meta: [
       { charSet: 'utf-8' },
@@ -77,10 +102,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const location = useLocation()
+  const { initialUser } = Route.useLoaderData()
   const isDemoMode = location.pathname === '/try-demo'
 
   return (
-    <AuthProvider>
+    <AuthProvider initialUser={initialUser}>
       <DemoProvider isDemoMode={isDemoMode}>
         <CalendarProvider>
           <AppLayout />
@@ -96,12 +122,17 @@ function AppLayout() {
   const { isAuthenticated, isLoading } = useAuth()
   const isDemoMode = useDemoMode()
 
+  const wasAuthenticated = INITIAL_WAS_AUTHENTICATED
+
   // Routes that should bypass app chrome entirely
   const isStandalonePage = location.pathname.startsWith('/ai') || location.pathname === '/home'
 
-  // Show app chrome optimistically during loading (assume user might be authenticated)
-  // This allows Nav to appear immediately instead of waiting for auth check
-  const showAppChrome = !isStandalonePage && (isDemoMode || isAuthenticated || isLoading)
+  // Show app chrome when:
+  // - In demo mode, OR
+  // - Authenticated, OR
+  // - Loading auth check, OR
+  // - localStorage says user was previously authenticated (optimistic)
+  const showAppChrome = !isStandalonePage && (isDemoMode || isAuthenticated || isLoading || wasAuthenticated)
 
   return (
     <div className={`flex h-screen flex-col ${showAppChrome ? 'bg-background-app' : ''}`}>

@@ -34,9 +34,14 @@ interface UseCachedEventsResult {
 export function useCachedEvents(params: UseCachedEventsParams): UseCachedEventsResult {
   const { year, allCalendarIds, selectedCalendarIds, isAuthenticated } = params
 
-  const [allEvents, setAllEvents] = useState<CalendarEvent[]>([])
+  // Generate cache key based on year only (we fetch all calendars)
+  const cacheKey = `${CACHE_KEY_PREFIX}${year}`
+
+  const initialCacheState = getInitialCacheState({ cacheKey })
+
+  const [allEvents, setAllEvents] = useState<CalendarEvent[]>(() => initialCacheState.allEvents)
   const [isLoading, setIsLoading] = useState(false)
-  const [hasInitialized, setHasInitialized] = useState(false)
+  const [hasInitialized, setHasInitialized] = useState<boolean>(() => initialCacheState.hasInitialized)
   const [error, setError] = useState<string | null>(null)
 
   // Use global store for sync state so other components can access it
@@ -51,9 +56,6 @@ export function useCachedEvents(params: UseCachedEventsParams): UseCachedEventsR
   // Get exclude terms for filtering
   const excludeTerms = useStore($excludeTerms)
 
-  // Generate cache key based on year only (we fetch all calendars)
-  const cacheKey = `${CACHE_KEY_PREFIX}${year}`
-
   // Fetch events when year changes or calendars list changes
   const calendarIdsKey = [...allCalendarIds].sort().join(',')
 
@@ -66,19 +68,22 @@ export function useCachedEvents(params: UseCachedEventsParams): UseCachedEventsR
     }
 
     if (allCalendarIds.length === 0) {
-      setAllEvents([])
       setError(null)
-      hasCachedDataRef.current = false
+      // If calendars haven't loaded yet, keep any cached events already seeded into state
+      // to avoid a blank screen / flicker for returning users.
+      // Only clear if we truly have no cached data.
+      const shouldClearEvents = !hasCachedDataRef.current && allEvents.length === 0
+      if (shouldClearEvents) setAllEvents([])
       return
     }
 
-    // Try to load from cache first
+    // Try to load from cache first (covers year change + non-hydration navigations)
     const cached = loadFromCache(cacheKey)
     const hasCache = cached !== null
 
     hasCachedDataRef.current = hasCache
 
-    if (hasCache) {
+    if (cached) {
       setAllEvents(cached.events)
       setHasInitialized(true)
     }
@@ -168,6 +173,11 @@ export function useCachedEvents(params: UseCachedEventsParams): UseCachedEventsR
   }
 }
 
+interface InitialCacheState {
+  allEvents: CalendarEvent[]
+  hasInitialized: boolean
+}
+
 // Pure function to load from cache
 function loadFromCache(cacheKey: string): CachedData | null {
   try {
@@ -187,6 +197,25 @@ function loadFromCache(cacheKey: string): CachedData | null {
   } catch {
     return null
   }
+}
+
+function getInitialCacheState(params: { cacheKey: string }): InitialCacheState {
+  const { cacheKey } = params
+
+  if (typeof window === 'undefined') {
+    const result: InitialCacheState = { allEvents: [], hasInitialized: false }
+    return result
+  }
+
+  const cached = loadFromCache(cacheKey)
+
+  if (!cached) {
+    const result: InitialCacheState = { allEvents: [], hasInitialized: false }
+    return result
+  }
+
+  const result: InitialCacheState = { allEvents: cached.events, hasInitialized: true }
+  return result
 }
 
 // Pure function to save to cache
@@ -218,17 +247,7 @@ async function fetchEventsFromApi(params: {
   setError: (error: string | null) => void
   hasCachedDataRef: React.MutableRefObject<boolean>
 }) {
-  const {
-    year,
-    calendarIds,
-    cacheKey,
-    showLoading,
-    setAllEvents,
-    setIsLoading,
-    setHasInitialized,
-    setError,
-    hasCachedDataRef,
-  } = params
+  const { year, calendarIds, cacheKey, showLoading, setAllEvents, setIsLoading, setHasInitialized, setError, hasCachedDataRef } = params
 
   if (showLoading) {
     setIsLoading(true)
@@ -242,10 +261,9 @@ async function fetchEventsFromApi(params: {
   try {
     const calendarIdsParam = calendarIds.join(',')
 
-    const response = await fetch(
-      `/api/calendar/events?year=${year}&calendarIds=${encodeURIComponent(calendarIdsParam)}`,
-      { credentials: 'include' }
-    )
+    const response = await fetch(`/api/calendar/events?year=${year}&calendarIds=${encodeURIComponent(calendarIdsParam)}`, {
+      credentials: 'include',
+    })
 
     const data = await response.json()
 

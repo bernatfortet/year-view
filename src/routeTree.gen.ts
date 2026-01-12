@@ -16,6 +16,7 @@ import { Route as HomeRouteImport } from './routes/home'
 import { Route as DemoRouteImport } from './routes/demo'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AiIndexRouteImport } from './routes/ai/index'
+import { Route as ApiRevalidateRouteImport } from './routes/api/revalidate'
 import { Route as DemoStartServerFuncsRouteImport } from './routes/demo/start.server-funcs'
 import { Route as DemoStartApiRequestRouteImport } from './routes/demo/start.api-request'
 import { Route as DemoApiNamesRouteImport } from './routes/demo/api.names'
@@ -63,6 +64,11 @@ const IndexRoute = IndexRouteImport.update({
 const AiIndexRoute = AiIndexRouteImport.update({
   id: '/ai/',
   path: '/ai/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiRevalidateRoute = ApiRevalidateRouteImport.update({
+  id: '/api/revalidate',
+  path: '/api/revalidate',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DemoStartServerFuncsRoute = DemoStartServerFuncsRouteImport.update({
@@ -138,6 +144,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/try-demo': typeof TryDemoRoute
+  '/api/revalidate': typeof ApiRevalidateRoute
   '/ai': typeof AiIndexRoute
   '/api/auth/google': typeof ApiAuthGoogleRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
@@ -160,6 +167,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/try-demo': typeof TryDemoRoute
+  '/api/revalidate': typeof ApiRevalidateRoute
   '/ai': typeof AiIndexRoute
   '/api/auth/google': typeof ApiAuthGoogleRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
@@ -183,6 +191,7 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
   '/try-demo': typeof TryDemoRoute
+  '/api/revalidate': typeof ApiRevalidateRoute
   '/ai/': typeof AiIndexRoute
   '/api/auth/google': typeof ApiAuthGoogleRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
@@ -207,6 +216,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/terms'
     | '/try-demo'
+    | '/api/revalidate'
     | '/ai'
     | '/api/auth/google'
     | '/api/auth/session'
@@ -229,6 +239,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/terms'
     | '/try-demo'
+    | '/api/revalidate'
     | '/ai'
     | '/api/auth/google'
     | '/api/auth/session'
@@ -251,6 +262,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/terms'
     | '/try-demo'
+    | '/api/revalidate'
     | '/ai/'
     | '/api/auth/google'
     | '/api/auth/session'
@@ -274,6 +286,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   TermsRoute: typeof TermsRoute
   TryDemoRoute: typeof TryDemoRoute
+  ApiRevalidateRoute: typeof ApiRevalidateRoute
   AiIndexRoute: typeof AiIndexRoute
   ApiAuthGoogleRoute: typeof ApiAuthGoogleRoute
   ApiAuthSessionRoute: typeof ApiAuthSessionRoute
@@ -332,6 +345,13 @@ declare module '@tanstack/react-router' {
       path: '/ai'
       fullPath: '/ai'
       preLoaderRoute: typeof AiIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/revalidate': {
+      id: '/api/revalidate'
+      path: '/api/revalidate'
+      fullPath: '/api/revalidate'
+      preLoaderRoute: typeof ApiRevalidateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/demo/start/server-funcs': {
@@ -457,6 +477,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   TermsRoute: TermsRoute,
   TryDemoRoute: TryDemoRoute,
+  ApiRevalidateRoute: ApiRevalidateRoute,
   AiIndexRoute: AiIndexRoute,
   ApiAuthGoogleRoute: ApiAuthGoogleRoute,
   ApiAuthSessionRoute: ApiAuthSessionRoute,
