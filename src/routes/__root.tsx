@@ -91,6 +91,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     <html lang='en'>
       <head>
         <HeadContent />
+        <script defer data-domain='yeartrips.com' src='https://plausible.pangea-labs.org/js/script.js' />
       </head>
       <body className='h-screen overflow-hidden bg-background'>
         {children}
