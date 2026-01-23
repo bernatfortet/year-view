@@ -4,8 +4,6 @@ import { Row, Column } from '@/styles'
 
 interface FlightInfoProps {
   description: string
-  tripStartDate: string
-  tripEndDate: string
 }
 
 interface ParsedFlight {
@@ -33,7 +31,7 @@ interface ParsedFlights {
 }
 
 export function FlightInfo(props: FlightInfoProps) {
-  const { description, tripStartDate, tripEndDate } = props
+  const { description } = props
 
   const parsed = parseAllFlights(description)
 
@@ -45,19 +43,21 @@ export function FlightInfo(props: FlightInfoProps) {
   const hasOutbound = parsed.outbound.length > 0
   const hasReturn = parsed.return.length > 0
 
-  const outboundRelative = getRelativeTimeLabel(tripStartDate)
-  // End date is exclusive in Google Calendar, so subtract 1 day for return flight
-  const returnRelative = getRelativeTimeLabel(tripEndDate, -1)
+  // Get relative time from the first flight's departure date in each section
+  const outboundDate = parsed.outbound[0]?.departureDate
+  const returnDate = parsed.return[0]?.departureDate
+  const outboundRelative = outboundDate ? getRelativeTimeLabelFromShortDate(outboundDate) : null
+  const returnRelative = returnDate ? getRelativeTimeLabelFromShortDate(returnDate) : null
 
   return (
     <Column className='mt-3 gap-2'>
       {parsed.confirmation && <ConfirmationBadge code={parsed.confirmation} />}
 
       {hasOutbound && <FlightSection label='Outbound' flights={parsed.outbound} relativeTime={outboundRelative} />}
-      {!hasOutbound && hasReturn && <PendingFlightCard label='Outbound' relativeTime={outboundRelative} />}
+      {!hasOutbound && hasReturn && <PendingFlightCard label='Outbound' relativeTime={null} />}
 
       {hasReturn && <FlightSection label='Return' flights={parsed.return} relativeTime={returnRelative} />}
-      {hasOutbound && !hasReturn && <PendingFlightCard label='Return' relativeTime={returnRelative} />}
+      {hasOutbound && !hasReturn && <PendingFlightCard label='Return' relativeTime={null} />}
     </Column>
   )
 }
@@ -188,11 +188,12 @@ function FlightSectionLabel(props: { label: string; relativeTime: string | null 
 
 /**
  * Returns a relative time label like "in 3 days" or "5 days ago"
+ * Parses short date format like "Mar 22" and assumes current or next year
  * Only returns a label if the number of days is less than 30
  */
-function getRelativeTimeLabel(dateString: string, dayOffset = 0): string | null {
-  const date = parseDateString(dateString)
-  date.setDate(date.getDate() + dayOffset)
+function getRelativeTimeLabelFromShortDate(shortDate: string): string | null {
+  const date = parseShortDate(shortDate)
+  if (!date) return null
 
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -211,15 +212,39 @@ function getRelativeTimeLabel(dateString: string, dayOffset = 0): string | null 
 }
 
 /**
- * Parses a date string (YYYY-MM-DD) as local date, not UTC.
+ * Parses a short date like "Mar 22" into a Date object.
+ * Assumes current year, or next year if the date would be more than 6 months in the past.
  */
-function parseDateString(dateString: string): Date {
-  if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-    const [year, month, day] = dateString.split('-').map(Number)
-    return new Date(year, month - 1, day)
+function parseShortDate(shortDate: string): Date | null {
+  const months: Record<string, number> = {
+    jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+    jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
   }
 
-  return new Date(dateString)
+  const match = shortDate.match(/^([A-Za-z]{3})\s+(\d{1,2})$/)
+  if (!match) return null
+
+  const monthStr = match[1].toLowerCase()
+  const day = parseInt(match[2], 10)
+  const month = months[monthStr]
+
+  if (month === undefined || isNaN(day)) return null
+
+  const today = new Date()
+  let year = today.getFullYear()
+
+  // Create date with current year first
+  const date = new Date(year, month, day)
+
+  // If date is more than 6 months in the past, assume next year
+  const sixMonthsAgo = new Date(today)
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
+
+  if (date < sixMonthsAgo) {
+    date.setFullYear(year + 1)
+  }
+
+  return date
 }
 
 function FlightRoute(props: { flight: ParsedFlight }) {

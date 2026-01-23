@@ -46,9 +46,7 @@ export function TripCard(props: TripCardProps) {
 
           <p className='text-[13px] text-tertiary font-medium'>{dateRange}</p>
 
-          {trip.tripStatus === 'has-info' && cleanedDescription && (
-            <FlightInfo description={cleanedDescription} tripStartDate={trip.startDate} tripEndDate={trip.endDate} />
-          )}
+          {trip.tripStatus === 'has-info' && cleanedDescription && <FlightInfo description={cleanedDescription} />}
         </Column>
 
         <TripMinimap startDate={trip.startDate} endDate={trip.endDate} tripStatus={trip.tripStatus} />

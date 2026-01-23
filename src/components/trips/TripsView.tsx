@@ -162,13 +162,21 @@ function scrollToTrip(id: string) {
   const element = document.getElementById(`trip-${id}`)
   if (!element) return
 
-  const elementRect = element.getBoundingClientRect()
-  const elementTop = elementRect.top + window.scrollY
-  const elementHeight = elementRect.height
-  const viewportHeight = window.innerHeight
-  const targetScroll = elementTop - viewportHeight / 2 + elementHeight / 2
+  // Find the scrollable container (main element with overflow-auto)
+  const scrollContainer = element.closest('main')
+  if (!scrollContainer) {
+    element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    return
+  }
 
-  const startScroll = window.scrollY
+  const containerRect = scrollContainer.getBoundingClientRect()
+  const elementRect = element.getBoundingClientRect()
+  const elementTop = elementRect.top - containerRect.top + scrollContainer.scrollTop
+  const elementHeight = elementRect.height
+  const containerHeight = containerRect.height
+  const targetScroll = elementTop - containerHeight / 2 + elementHeight / 2
+
+  const startScroll = scrollContainer.scrollTop
   const distance = targetScroll - startScroll
   const duration = 300
   let startTime: number | null = null
@@ -182,7 +190,7 @@ function scrollToTrip(id: string) {
     const elapsed = currentTime - startTime
     const progress = Math.min(elapsed / duration, 1)
 
-    window.scrollTo(0, startScroll + distance * easeInOutCubic(progress))
+    scrollContainer.scrollTop = startScroll + distance * easeInOutCubic(progress)
 
     if (progress < 1) {
       requestAnimationFrame(animate)
