@@ -296,9 +296,92 @@ function RawDescription(props: { description: string }) {
 
   return (
     <div className='mt-3 rounded-lg border bg-stone-50 p-3 text-sm text-tertiary whitespace-pre-line'>
-      {sanitized}
+      <Linkify text={sanitized} />
     </div>
   )
+}
+
+/**
+ * Renders text with URLs and deep links as clickable anchors.
+ * Supports http/https URLs and app deep links (e.g., app://, custom-scheme://)
+ */
+function Linkify(props: { text: string }) {
+  const { text } = props
+
+  const parts = splitTextByLinks(text)
+
+  return (
+    <>
+      {parts.map((part, index) => {
+        if (part.type === 'link') {
+          return (
+            <a
+              key={index}
+              href={part.value}
+              target='_blank'
+              rel='noopener noreferrer'
+              onClick={handleLinkClick}
+              className='text-blue-600 hover:underline break-all'
+            >
+              {part.value}
+            </a>
+          )
+        }
+
+        return <span key={index}>{part.value}</span>
+      })}
+    </>
+  )
+}
+
+function handleLinkClick(event: React.MouseEvent) {
+  event.stopPropagation()
+}
+
+type TextPart = { type: 'text' | 'link'; value: string }
+
+/**
+ * Splits text into alternating text and link segments.
+ * Matches:
+ * - Standard URLs: http://, https://
+ * - Deep links: any-scheme:// (e.g., slack://, notion://, app://)
+ */
+function splitTextByLinks(text: string): TextPart[] {
+  // Match URLs with http(s) or custom schemes (word chars + hyphens followed by ://)
+  const urlPattern = /(?:https?:\/\/|[a-zA-Z][a-zA-Z0-9+.-]*:\/\/)[^\s<>"')\]]+/g
+
+  const parts: TextPart[] = []
+  let lastIndex = 0
+  let match: RegExpExecArray | null
+
+  while ((match = urlPattern.exec(text)) !== null) {
+    // Add text before the link
+    if (match.index > lastIndex) {
+      parts.push({ type: 'text', value: text.slice(lastIndex, match.index) })
+    }
+
+    // Clean up trailing punctuation that's likely not part of the URL
+    let url = match[0]
+    const trailingPunctuation = /[.,;:!?)]+$/
+    const trailingMatch = url.match(trailingPunctuation)
+
+    if (trailingMatch) {
+      url = url.slice(0, -trailingMatch[0].length)
+      parts.push({ type: 'link', value: url })
+      parts.push({ type: 'text', value: trailingMatch[0] })
+    } else {
+      parts.push({ type: 'link', value: url })
+    }
+
+    lastIndex = match.index + match[0].length
+  }
+
+  // Add remaining text
+  if (lastIndex < text.length) {
+    parts.push({ type: 'text', value: text.slice(lastIndex) })
+  }
+
+  return parts
 }
 
 /**
