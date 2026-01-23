@@ -15,6 +15,7 @@ import {
   getMonthName,
   getTripInfo,
   isBirthdayEvent,
+  isVisitEvent,
   parseDateString,
 } from './utils'
 
@@ -174,7 +175,13 @@ type EventLookupMaps = {
   birthdaysByDate: Record<string, CalendarEvent[]>
 }
 
-const DEFAULT_TENTATIVE: TentativeInfo = { hasTentative: false, isFirstDay: false, isLastDay: false }
+const DEFAULT_TENTATIVE: TentativeInfo = { hasTentative: false, hasTrip: false, hasVisit: false, isFirstDay: false, isLastDay: false }
+
+function getEventColor(event: CalendarEvent): string {
+  return event.colorId
+    ? EVENT_COLORS[event.colorId] || EVENT_COLORS.default
+    : event.backgroundColor || EVENT_COLORS.default
+}
 
 function buildEventLookupMaps(events: CalendarEvent[]): EventLookupMaps {
   const tentativeByDate: Record<string, TentativeInfo> = {}
@@ -184,10 +191,14 @@ function buildEventLookupMaps(events: CalendarEvent[]): EventLookupMaps {
     if (!event.startDate || !event.endDate) continue
 
     const isTentative = event.summary.includes('?')
+    const isTrip = getTripInfo(event).isTrip
+    const isVisit = isVisitEvent(event)
     const isBirthday = isBirthdayEvent(event)
 
-    // Skip events that aren't tentative or birthday
-    if (!isTentative && !isBirthday) continue
+    // Skip events that aren't tentative, trip, visit, or birthday
+    if (!isTentative && !isTrip && !isVisit && !isBirthday) continue
+
+    const eventColor = getEventColor(event)
 
     // Generate all dates this event covers
     const startDate = parseDateString(event.startDate)
@@ -200,11 +211,17 @@ function buildEventLookupMaps(events: CalendarEvent[]): EventLookupMaps {
     while (currentDate < endDate) {
       const dateStr = formatDateString(currentDate)
 
-      if (isTentative) {
+      if (isTentative || isTrip || isVisit) {
+        const existing = tentativeByDate[dateStr]
+        // Prioritize trip color over tentative color over visit color if multiple exist
+        const colorToUse = existing?.eventColor && !isTrip && !isVisit ? existing.eventColor : eventColor
         tentativeByDate[dateStr] = {
-          hasTentative: true,
-          isFirstDay: dayIndex === 0,
-          isLastDay: dayIndex === totalDays - 1,
+          hasTentative: existing?.hasTentative || isTentative,
+          hasTrip: existing?.hasTrip || isTrip,
+          hasVisit: existing?.hasVisit || isVisit,
+          isFirstDay: existing?.isFirstDay || dayIndex === 0,
+          isLastDay: existing?.isLastDay || dayIndex === totalDays - 1,
+          eventColor: colorToUse,
         }
       }
 

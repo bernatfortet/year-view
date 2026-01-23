@@ -1,10 +1,10 @@
-import { Plane, Car } from 'lucide-react'
+import { Plane, Car, PlaneLanding } from 'lucide-react'
 
 import { Row } from '@/styles'
 
 import type { EventBarProps } from './types'
 import { EVENT_COLORS } from './types'
-import { formatMinimalFlightInfo, getTripInfo } from './utils'
+import { formatMinimalFlightInfo, getTripInfo, isVisitEvent } from './utils'
 
 export function EventBar({ event }: EventBarProps) {
   // Priority: event's own colorId > calendar's backgroundColor > default
@@ -24,9 +24,10 @@ export function EventBar({ event }: EventBarProps) {
   const marginLeft = event.continuesFromPrevious ? '' : 'ml-1'
   const marginRight = event.continuesAfter ? '' : 'mr-1'
 
-  // Trip detection
+  // Trip and visit detection
   const tripInfo = getTripInfo(event)
   const showReturnInfo = tripInfo.returnFlight && event.spanDays >= 3
+  const isVisit = isVisitEvent(event)
 
   function handleClick() {
     if (event.htmlLink) {
@@ -47,7 +48,7 @@ export function EventBar({ event }: EventBarProps) {
     >
       {!event.continuesFromPrevious && (
         <>
-          <TripIcon tripType={tripInfo.tripType} className={textColor} />
+          <EventIcon tripType={tripInfo.tripType} isVisit={isVisit} className={textColor} />
           <span className='truncate'>{event.summary}</span>
           {showReturnInfo && (
             <span className='ml-auto opacity-70 text-[9px] shrink-0'>
@@ -60,14 +61,16 @@ export function EventBar({ event }: EventBarProps) {
   )
 }
 
-type TripIconProps = {
+type EventIconProps = {
   tripType: 'flight' | 'car' | null
+  isVisit: boolean
   className?: string
 }
 
-function TripIcon(props: TripIconProps) {
-  const { tripType, className } = props
+function EventIcon(props: EventIconProps) {
+  const { tripType, isVisit, className } = props
 
+  if (isVisit) return <PlaneLanding className={`size-2.5 shrink-0 ${className}`} />
   if (tripType === 'flight') return <Plane className={`size-2.5 shrink-0 ${className}`} />
   if (tripType === 'car') return <Car className={`size-2.5 shrink-0 ${className}`} />
 

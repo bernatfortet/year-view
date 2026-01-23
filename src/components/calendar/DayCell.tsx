@@ -8,7 +8,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { DayNumber } from './DayNumber'
 import { HatchedPattern } from '@/components/ui/HatchedPattern'
 
-const DEFAULT_TENTATIVE_INFO: TentativeInfo = { hasTentative: false, isFirstDay: false, isLastDay: false }
+const DEFAULT_TENTATIVE_INFO: TentativeInfo = { hasTentative: false, hasTrip: false, hasVisit: false, isFirstDay: false, isLastDay: false }
 
 export function DayCell(props: DayCellProps) {
   const { day, size, tentativeInfo = DEFAULT_TENTATIVE_INFO, birthdayEvents = [], monthLabel } = props
@@ -22,15 +22,18 @@ export function DayCell(props: DayCellProps) {
 
   const bgClass = isWeekend ? 'bg-weekend-bg' : 'bg-white'
   const textClass = day.isToday ? '' : 'text-tertiary'
-  const gridBorderClasses = tentativeInfo.hasTentative ? '' : 'border-r border-b border-stone-200'
+  const hasDecoration = tentativeInfo.hasTentative || tentativeInfo.hasTrip || tentativeInfo.hasVisit
+  const gridBorderClasses = hasDecoration ? '' : 'border-r border-b border-stone-200'
   const borderClasses = day.isToday ? 'border-2 border-brand-red' : gridBorderClasses
   const baseClasses = 'items-start justify-between p-1 hover:bg-stone-50 hover:text-ink-primary'
   const dayNumberSize = size >= 80 ? 'lg' : size >= 60 ? 'md' : 'sm'
 
+  const decorationColor = tentativeInfo.eventColor || '#f59e0b'
+
   return (
     <Row className={`relative ${baseClasses} ${bgClass} ${textClass} ${borderClasses}`} style={{ width: size, height: size }}>
-      {tentativeInfo.hasTentative && <HatchedPattern color='#fbbf24' strokeWidth={1} spacing={5} />}
-      {tentativeInfo.hasTentative && <TentativeBorders tentativeInfo={tentativeInfo} />}
+      {hasDecoration && <HatchedPattern color={decorationColor} strokeWidth={1} spacing={5} />}
+      {hasDecoration && <TentativeBorders tentativeInfo={tentativeInfo} color={decorationColor} />}
       <Row className='relative z-10 items-center gap-1'>
         <DayNumber day={day.dayOfMonth} isToday={day.isToday} size={dayNumberSize} />
         {monthLabel && (
@@ -44,34 +47,33 @@ export function DayCell(props: DayCellProps) {
   )
 }
 
-const TENTATIVE_BORDER_COLOR = '#f59e0b'
 const TENTATIVE_BORDER_THICKNESS = 1
 
-function TentativeBorders({ tentativeInfo }: { tentativeInfo: TentativeInfo }) {
+function TentativeBorders({ tentativeInfo, color }: { tentativeInfo: TentativeInfo; color: string }) {
   return (
     <>
-      {/* Top border - always for tentative */}
+      {/* Top border - always for tentative/trip */}
       <div
         className='absolute top-0 left-0 right-0'
-        style={{ backgroundColor: TENTATIVE_BORDER_COLOR, height: TENTATIVE_BORDER_THICKNESS }}
+        style={{ backgroundColor: color, height: TENTATIVE_BORDER_THICKNESS }}
       />
-      {/* Bottom border - always for tentative */}
+      {/* Bottom border - always for tentative/trip */}
       <div
         className='absolute bottom-0 left-0 right-0'
-        style={{ backgroundColor: TENTATIVE_BORDER_COLOR, height: TENTATIVE_BORDER_THICKNESS }}
+        style={{ backgroundColor: color, height: TENTATIVE_BORDER_THICKNESS }}
       />
       {/* Left border - only for first day */}
       {tentativeInfo.isFirstDay && (
         <div
           className='absolute top-0 bottom-0 left-0'
-          style={{ backgroundColor: TENTATIVE_BORDER_COLOR, width: TENTATIVE_BORDER_THICKNESS }}
+          style={{ backgroundColor: color, width: TENTATIVE_BORDER_THICKNESS }}
         />
       )}
       {/* Right border - only for last day */}
       {tentativeInfo.isLastDay && (
         <div
           className='absolute top-0 bottom-0 right-0'
-          style={{ backgroundColor: TENTATIVE_BORDER_COLOR, width: TENTATIVE_BORDER_THICKNESS }}
+          style={{ backgroundColor: color, width: TENTATIVE_BORDER_THICKNESS }}
         />
       )}
     </>

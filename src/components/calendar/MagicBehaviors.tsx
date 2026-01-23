@@ -1,4 +1,4 @@
-import { CircleHelp, Gift, type LucideIcon, SparklesIcon, Plane, Car, Mail } from 'lucide-react'
+import { CircleHelp, Gift, type LucideIcon, SparklesIcon, Plane, Car, Mail, PlaneLanding } from 'lucide-react'
 import { useState } from 'react'
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -61,6 +61,14 @@ const BEHAVIORS: Behavior[] = [
         content: 'Gmail links in the description appear as a "View Email" button in the trip header.',
       },
     ],
+  },
+  {
+    id: 'visits',
+    icon: PlaneLanding,
+    title: 'Visits',
+    description: 'Track when someone is visiting you by starting the event title with "Visit:".',
+    example: 'Visit: Mom & Dad',
+    result: 'The event shows a landing plane icon, the days are highlighted with a colored pattern, and visits appear in the Trips & Visits tab alongside your trips.',
   },
 ]
 

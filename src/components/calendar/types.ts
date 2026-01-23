@@ -57,11 +57,15 @@ export interface MonthGridProps {
 
 /**
  * Tentative chunk boundary info for a day
+ * Also tracks trips and visits for visual decoration
  */
 export interface TentativeInfo {
   hasTentative: boolean
+  hasTrip: boolean
+  hasVisit: boolean
   isFirstDay: boolean
   isLastDay: boolean
+  eventColor?: string // Color from the event for hatch pattern and borders
 }
 
 /**

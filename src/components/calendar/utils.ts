@@ -1,4 +1,5 @@
 import type { CalendarDay, CalendarEvent, LayoutEvent, TentativeInfo } from './types'
+import { EVENT_COLORS } from './types'
 
 const BIRTHDAY_KEYWORDS = ['birthday', 'bday', 'aniversario', 'aniversari']
 
@@ -6,6 +7,10 @@ export function isBirthdayEvent(event: CalendarEvent): boolean {
   const summaryLower = event.summary.toLowerCase()
 
   return BIRTHDAY_KEYWORDS.some((keyword) => summaryLower.includes(keyword))
+}
+
+export function isVisitEvent(event: CalendarEvent): boolean {
+  return event.summary.toLowerCase().startsWith('visit:')
 }
 
 export function dayHasTentativeEvent(day: CalendarDay, events: CalendarEvent[]): boolean {
@@ -21,6 +26,12 @@ export function dayHasTentativeEvent(day: CalendarDay, events: CalendarEvent[]):
   return hasTentative
 }
 
+function getEventColor(event: CalendarEvent): string {
+  return event.colorId
+    ? EVENT_COLORS[event.colorId] || EVENT_COLORS.default
+    : event.backgroundColor || EVENT_COLORS.default
+}
+
 export function getTentativeInfoForDay(day: CalendarDay, events: CalendarEvent[]): TentativeInfo {
   const dateString = day.dateString
 
@@ -30,15 +41,40 @@ export function getTentativeInfoForDay(day: CalendarDay, events: CalendarEvent[]
     return hasQuestionMark && intersectsDay
   })
 
-  if (!tentativeEvent) {
-    return { hasTentative: false, isFirstDay: false, isLastDay: false }
+  const tripEvent = events.find((event) => {
+    const isTrip = getTripInfo(event).isTrip
+    const intersectsDay = event.startDate <= dateString && event.endDate > dateString
+    return isTrip && intersectsDay
+  })
+
+  const visitEvent = events.find((event) => {
+    const isVisit = isVisitEvent(event)
+    const intersectsDay = event.startDate <= dateString && event.endDate > dateString
+    return isVisit && intersectsDay
+  })
+
+  const hasTentative = !!tentativeEvent
+  const hasTrip = !!tripEvent
+  const hasVisit = !!visitEvent
+
+  if (!hasTentative && !hasTrip && !hasVisit) {
+    return { hasTentative: false, hasTrip: false, hasVisit: false, isFirstDay: false, isLastDay: false }
   }
 
-  const isFirstDay = tentativeEvent.startDate === dateString
-  const lastDayString = getDateBefore(tentativeEvent.endDate)
+  // Calculate first/last day - prioritize tentative, then trip, then visit
+  const eventForBoundaries = tentativeEvent || tripEvent || visitEvent
+  const isFirstDay = eventForBoundaries!.startDate === dateString
+  const lastDayString = getDateBefore(eventForBoundaries!.endDate)
   const isLastDay = lastDayString === dateString
 
-  return { hasTentative: true, isFirstDay, isLastDay }
+  // Prioritize trip color over tentative color over visit color
+  const eventColor = tripEvent
+    ? getEventColor(tripEvent)
+    : tentativeEvent
+      ? getEventColor(tentativeEvent)
+      : getEventColor(visitEvent!)
+
+  return { hasTentative, hasTrip, hasVisit, isFirstDay, isLastDay, eventColor }
 }
 
 function getDateBefore(dateString: string): string {
