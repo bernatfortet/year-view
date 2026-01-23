@@ -4,6 +4,8 @@ import { Row, Column } from '@/styles'
 
 interface FlightInfoProps {
   description: string
+  tripStartDate: string
+  tripEndDate: string
 }
 
 interface ParsedFlight {
@@ -31,7 +33,7 @@ interface ParsedFlights {
 }
 
 export function FlightInfo(props: FlightInfoProps) {
-  const { description } = props
+  const { description, tripStartDate, tripEndDate } = props
 
   const parsed = parseAllFlights(description)
 
@@ -43,15 +45,19 @@ export function FlightInfo(props: FlightInfoProps) {
   const hasOutbound = parsed.outbound.length > 0
   const hasReturn = parsed.return.length > 0
 
+  const outboundRelative = getRelativeTimeLabel(tripStartDate)
+  // End date is exclusive in Google Calendar, so subtract 1 day for return flight
+  const returnRelative = getRelativeTimeLabel(tripEndDate, -1)
+
   return (
     <Column className='mt-3 gap-2'>
       {parsed.confirmation && <ConfirmationBadge code={parsed.confirmation} />}
 
-      {hasOutbound && <FlightSection label='Outbound' flights={parsed.outbound} />}
-      {!hasOutbound && hasReturn && <PendingFlightCard label='Outbound' />}
+      {hasOutbound && <FlightSection label='Outbound' flights={parsed.outbound} relativeTime={outboundRelative} />}
+      {!hasOutbound && hasReturn && <PendingFlightCard label='Outbound' relativeTime={outboundRelative} />}
 
-      {hasReturn && <FlightSection label='Return' flights={parsed.return} />}
-      {hasOutbound && !hasReturn && <PendingFlightCard label='Return' />}
+      {hasReturn && <FlightSection label='Return' flights={parsed.return} relativeTime={returnRelative} />}
+      {hasOutbound && !hasReturn && <PendingFlightCard label='Return' relativeTime={returnRelative} />}
     </Column>
   )
 }
@@ -67,32 +73,32 @@ function ConfirmationBadge(props: { code: string }) {
   )
 }
 
-function FlightSection(props: { label: string; flights: ParsedFlight[] }) {
-  const { label, flights } = props
+function FlightSection(props: { label: string; flights: ParsedFlight[]; relativeTime: string | null }) {
+  const { label, flights, relativeTime } = props
 
   // For connecting flights, show a combined card
   if (flights.length > 1) {
-    return <ConnectingFlightsCard label={label} flights={flights} />
+    return <ConnectingFlightsCard label={label} flights={flights} relativeTime={relativeTime} />
   }
 
   // Single flight
-  return <FlightCard label={label} flight={flights[0]} />
+  return <FlightCard label={label} flight={flights[0]} relativeTime={relativeTime} />
 }
 
-function FlightCard(props: { label: string; flight: ParsedFlight }) {
-  const { label, flight } = props
+function FlightCard(props: { label: string; flight: ParsedFlight; relativeTime: string | null }) {
+  const { label, flight, relativeTime } = props
 
   return (
     <div className='rounded-lg border bg-stone-50 p-3'>
-      <div className='text-xs font-medium text-tertiary mb-1'>{label}</div>
+      <FlightSectionLabel label={label} relativeTime={relativeTime} />
       <FlightRoute flight={flight} />
       <FlightTimes flight={flight} />
     </div>
   )
 }
 
-function ConnectingFlightsCard(props: { label: string; flights: ParsedFlight[] }) {
-  const { label, flights } = props
+function ConnectingFlightsCard(props: { label: string; flights: ParsedFlight[]; relativeTime: string | null }) {
+  const { label, flights, relativeTime } = props
 
   const firstFlight = flights[0]
   const lastFlight = flights[flights.length - 1]
@@ -104,7 +110,7 @@ function ConnectingFlightsCard(props: { label: string; flights: ParsedFlight[] }
 
   return (
     <div className='rounded-lg border bg-stone-50 p-3'>
-      <div className='text-xs font-medium text-tertiary mb-1'>{label}</div>
+      <FlightSectionLabel label={label} relativeTime={relativeTime} />
 
       {/* Summary header */}
       <Row className='items-center justify-between mb-3'>
@@ -155,18 +161,65 @@ function FlightLeg(props: { flight: ParsedFlight; isLast: boolean }) {
   )
 }
 
-function PendingFlightCard(props: { label: string }) {
-  const { label } = props
+function PendingFlightCard(props: { label: string; relativeTime: string | null }) {
+  const { label, relativeTime } = props
 
   return (
     <div className='rounded-lg border border-dashed border-stone-300 bg-stone-50/50 p-3'>
-      <div className='text-xs font-medium text-tertiary mb-1'>{label}</div>
+      <FlightSectionLabel label={label} relativeTime={relativeTime} />
       <Row className='items-center gap-2 text-sm text-tertiary'>
         <Clock className='size-4' />
         <span>Pending</span>
       </Row>
     </div>
   )
+}
+
+function FlightSectionLabel(props: { label: string; relativeTime: string | null }) {
+  const { label, relativeTime } = props
+
+  return (
+    <Row className='items-center gap-1.5 mb-1'>
+      <span className='text-xs font-medium text-tertiary'>{label}</span>
+      {relativeTime && <span className='text-xs text-tertiary/70'>{relativeTime}</span>}
+    </Row>
+  )
+}
+
+/**
+ * Returns a relative time label like "in 3 days" or "5 days ago"
+ * Only returns a label if the number of days is less than 30
+ */
+function getRelativeTimeLabel(dateString: string, dayOffset = 0): string | null {
+  const date = parseDateString(dateString)
+  date.setDate(date.getDate() + dayOffset)
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const diffTime = date.getTime() - today.getTime()
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24))
+
+  if (Math.abs(diffDays) >= 30) return null
+
+  if (diffDays === 0) return 'today'
+  if (diffDays === 1) return 'tomorrow'
+  if (diffDays === -1) return 'yesterday'
+  if (diffDays > 0) return `in ${diffDays} days`
+
+  return `${Math.abs(diffDays)} days ago`
+}
+
+/**
+ * Parses a date string (YYYY-MM-DD) as local date, not UTC.
+ */
+function parseDateString(dateString: string): Date {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+    const [year, month, day] = dateString.split('-').map(Number)
+    return new Date(year, month - 1, day)
+  }
+
+  return new Date(dateString)
 }
 
 function FlightRoute(props: { flight: ParsedFlight }) {

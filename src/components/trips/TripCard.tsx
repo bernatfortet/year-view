@@ -1,4 +1,4 @@
-import { Calendar, Car, CheckCircle2, Mail, Plane, ExternalLink } from 'lucide-react'
+import { Calendar, Car, CheckCircle2, Mail, Plane, PlaneLanding, ExternalLink } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 import { Row, Column } from '@/styles'
@@ -46,7 +46,9 @@ export function TripCard(props: TripCardProps) {
 
           <p className='text-[13px] text-tertiary font-medium'>{dateRange}</p>
 
-          {trip.tripStatus === 'has-info' && cleanedDescription && <FlightInfo description={cleanedDescription} />}
+          {trip.tripStatus === 'has-info' && cleanedDescription && (
+            <FlightInfo description={cleanedDescription} tripStartDate={trip.startDate} tripEndDate={trip.endDate} />
+          )}
         </Column>
 
         <TripMinimap startDate={trip.startDate} endDate={trip.endDate} tripStatus={trip.tripStatus} />
@@ -70,11 +72,20 @@ function StatusIcon(props: { trip: Trip }) {
   }
 
   if (trip.tripStatus === 'has-info') {
-    const TripIcon = isCarTrip ? Car : Plane
+    const TripIcon = trip.isVisit ? PlaneLanding : isCarTrip ? Car : Plane
 
     return (
       <div className='rounded-lg bg-brand-red/10 p-3 text-brand-red'>
         <TripIcon className={iconClasses} />
+      </div>
+    )
+  }
+
+  // For visits without info, show landing icon in neutral color
+  if (trip.isVisit) {
+    return (
+      <div className='rounded-lg bg-blue-100 p-3 text-blue-600'>
+        <PlaneLanding className={iconClasses} />
       </div>
     )
   }

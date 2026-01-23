@@ -5,18 +5,19 @@ export type TripStatus = 'todo' | 'has-info' | 'pending'
 export interface Trip extends CalendarEvent {
   tripStatus: TripStatus
   isPast: boolean
+  isVisit: boolean
 }
 
 /**
  * Filters events to only include trips (events with "trip" in the title)
- * and enriches them with status information.
+ * or visits (events starting with "Visit:") and enriches them with status information.
  */
 export function filterAndEnrichTrips(events: CalendarEvent[]): Trip[] {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
   const trips = events
-    .filter((event) => isTripEvent(event))
+    .filter((event) => isTripOrVisitEvent(event))
     .map((event) => enrichTripWithStatus(event, today))
     .sort((a, b) => a.startDate.localeCompare(b.startDate))
 
@@ -24,13 +25,19 @@ export function filterAndEnrichTrips(events: CalendarEvent[]): Trip[] {
 }
 
 /**
- * Determines if an event is a trip based on its title
+ * Determines if an event is a trip or visit based on its title
  */
-function isTripEvent(event: CalendarEvent): boolean {
+function isTripOrVisitEvent(event: CalendarEvent): boolean {
   const summaryLower = event.summary.toLowerCase()
-  const isTrip = summaryLower.includes('trip')
 
-  return isTrip
+  return summaryLower.includes('trip') || summaryLower.startsWith('visit:')
+}
+
+/**
+ * Determines if an event is a visit (someone visiting you)
+ */
+function isVisitEvent(event: CalendarEvent): boolean {
+  return event.summary.toLowerCase().startsWith('visit:')
 }
 
 /**
@@ -39,11 +46,13 @@ function isTripEvent(event: CalendarEvent): boolean {
 function enrichTripWithStatus(event: CalendarEvent, today: Date): Trip {
   const tripStatus = determineTripStatus(event)
   const isPast = checkIfPast(event, today)
+  const isVisit = isVisitEvent(event)
 
   return {
     ...event,
     tripStatus,
     isPast,
+    isVisit,
   }
 }
 
@@ -121,21 +130,32 @@ function parseDateString(dateString: string): Date {
 }
 
 /**
- * Gets the display name for a trip.
- * Removes "trip" prefix, adds single trailing "?" for todo trips to show uncertainty.
+ * Gets the display name for a trip or visit.
+ * Removes "trip" or "Visit:" prefix, adds single trailing "?" for todo trips to show uncertainty.
  */
 export function getTripDisplayName(trip: Trip): string {
-  const displayName = trip.summary
-    .replace(/trip/gi, '')
+  let displayName = trip.summary
+
+  if (trip.isVisit) {
+    // Remove "Visit:" prefix (case insensitive)
+    displayName = displayName.replace(/^visit:\s*/i, '')
+  } else {
+    // Remove "trip" from anywhere in the name
+    displayName = displayName.replace(/trip/gi, '')
+  }
+
+  displayName = displayName
     .replace(/\?/g, '')
     .replace(/[-–—:]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
 
+  const defaultName = trip.isVisit ? 'Unnamed Visit' : 'Unnamed Trip'
+
   // Add single trailing "?" for todos to indicate uncertainty
   if (trip.tripStatus === 'todo') {
-    return (displayName || 'Unnamed Trip') + '?'
+    return (displayName || defaultName) + '?'
   }
 
-  return displayName || 'Unnamed Trip'
+  return displayName || defaultName
 }
