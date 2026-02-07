@@ -22,7 +22,7 @@ export function TripPopoverContent(props: TripPopoverContentProps) {
   const cleanedDescription = stripGmailLink(trip.description)
 
   return (
-    <Column className='w-[320px] max-w-[360px] gap-2 p-3'>
+    <Column className='w-[370px] max-w-[410px] gap-2 p-3'>
       <Row className='items-start gap-2'>
         <StatusIcon trip={trip} />
 
