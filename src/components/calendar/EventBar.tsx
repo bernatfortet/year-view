@@ -31,6 +31,7 @@ export function EventBar({ event }: EventBarProps) {
   // Trip and visit detection
   const tripInfo = getTripInfo(event)
   const showReturnInfo = tripInfo.returnFlight && event.spanDays >= 3
+  const returnInfo = showReturnInfo ? formatMinimalFlightInfo(tripInfo.returnFlight!) : null
   const isVisit = isVisitEvent(event)
   const trip = getTripFromEvent(event)
   const showTripPopover = !!trip
@@ -41,7 +42,7 @@ export function EventBar({ event }: EventBarProps) {
     }
   }
 
-  const baseClassName = `h-4 items-center gap-1 px-1.5 text-[10px] font-medium ${textColor} truncate cursor-pointer hover:brightness-110 pointer-events-auto ${roundedLeft} ${roundedRight} ${marginLeft} ${marginRight}`
+  const baseClassName = `h-4 items-center gap-1 px-1.5 text-[10px] font-medium ${textColor} truncate cursor-pointer hover:brightness-110 data-[popup-open]:brightness-110 pointer-events-auto ${roundedLeft} ${roundedRight} ${marginLeft} ${marginRight}`
 
   if (!showTripPopover) {
     return (
@@ -55,17 +56,14 @@ export function EventBar({ event }: EventBarProps) {
         title={event.summary}
         onClick={handleClick}
       >
-        {!event.continuesFromPrevious && (
-          <>
-            <EventIcon tripType={tripInfo.tripType} isVisit={isVisit} className={textColor} />
-            <span className='truncate'>{event.summary}</span>
-            {showReturnInfo && (
-              <span className='ml-auto opacity-70 text-[9px] shrink-0'>
-                ↩ {formatMinimalFlightInfo(tripInfo.returnFlight!)}
-              </span>
-            )}
-          </>
-        )}
+        <EventBarContent
+          eventSummary={event.summary}
+          isContinuation={event.continuesFromPrevious}
+          tripType={tripInfo.tripType}
+          isVisit={isVisit}
+          textColor={textColor}
+          returnInfo={returnInfo}
+        />
       </Row>
     )
   }
@@ -93,24 +91,46 @@ export function EventBar({ event }: EventBarProps) {
               handleClick()
             }}
           >
-            {!event.continuesFromPrevious && (
-              <>
-                <EventIcon tripType={tripInfo.tripType} isVisit={isVisit} className={textColor} />
-                <span className='truncate'>{event.summary}</span>
-                {showReturnInfo && (
-                  <span className='ml-auto opacity-70 text-[9px] shrink-0'>
-                    ↩ {formatMinimalFlightInfo(tripInfo.returnFlight!)}
-                  </span>
-                )}
-              </>
-            )}
+            <EventBarContent
+              eventSummary={event.summary}
+              isContinuation={event.continuesFromPrevious}
+              tripType={tripInfo.tripType}
+              isVisit={isVisit}
+              textColor={textColor}
+              returnInfo={returnInfo}
+            />
           </Row>
         )}
       />
-      <PopoverContent side='top' align='start' className='p-0'>
+      <PopoverContent side='top' align='start' className='p-0 max-h-[calc(100vh-16px)] overflow-y-auto' hideArrow>
         <TripPopoverContent trip={trip!} />
       </PopoverContent>
     </Popover>
+  )
+}
+
+type EventBarContentProps = {
+  eventSummary: string
+  isContinuation: boolean
+  tripType: 'flight' | 'car' | null
+  isVisit: boolean
+  textColor: string
+  returnInfo: string | null
+}
+
+function EventBarContent(props: EventBarContentProps) {
+  const { eventSummary, isContinuation, tripType, isVisit, textColor, returnInfo } = props
+
+  if (isContinuation) {
+    return <span className='truncate'>...{eventSummary}</span>
+  }
+
+  return (
+    <>
+      <EventIcon tripType={tripType} isVisit={isVisit} className={textColor} />
+      <span className='truncate'>{eventSummary}</span>
+      {returnInfo && <span className='ml-auto opacity-70 text-[9px] shrink-0'>↩ {returnInfo}</span>}
+    </>
   )
 }
 
