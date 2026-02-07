@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useStore } from '@nanostores/react'
 
 import { Row, Column } from '@/styles'
@@ -10,22 +11,58 @@ import { getMonthName } from './utils'
 
 const DEFAULT_DAY_SIZE = 100
 
+function findScrollContainer(element: Element | null): Element | null {
+  if (!element) return null
+  return element.closest('[class*="overflow-auto"]')
+}
+
+function calculateScrollToTop(element: Element, scrollContainer: Element, headerOffset: number = 0): number {
+  const elementRect = element.getBoundingClientRect()
+  const containerRect = scrollContainer.getBoundingClientRect()
+  const offsetToTop = elementRect.top - containerRect.top
+  return scrollContainer.scrollTop + offsetToTop - headerOffset
+}
+
+function calculateScrollToCenter(element: Element, scrollContainer: Element): number {
+  const elementRect = element.getBoundingClientRect()
+  const containerRect = scrollContainer.getBoundingClientRect()
+  return scrollContainer.scrollTop + elementRect.top - containerRect.top - containerRect.height / 2 + elementRect.height / 2
+}
+
+function getHeaderHeight(scrollContainer: Element, headerSelector: string): number {
+  const headerElement = scrollContainer.querySelector(headerSelector)
+  return headerElement instanceof HTMLElement ? headerElement.getBoundingClientRect().height : 0
+}
+
 export function YearView({ year, events, daySize = DEFAULT_DAY_SIZE }: YearViewProps) {
   const months = Array.from({ length: 12 }, (_, index) => index)
   const activeMonth = useStore($activeMonth)
   const isSyncing = useStore($isSyncingEvents)
 
+  useEffect(() => {
+    const currentYear = new Date().getFullYear()
+    if (year !== currentYear) return
+
+    const todayWeekElement = document.querySelector('[data-today-week="true"]')
+    if (!todayWeekElement) return
+
+    const scrollContainer = findScrollContainer(todayWeekElement)
+    if (!scrollContainer) return
+
+    const headerHeight = getHeaderHeight(scrollContainer, '[data-weekday-header="year-view"]')
+    const targetScrollTop = calculateScrollToTop(todayWeekElement, scrollContainer, headerHeight)
+
+    scrollContainer.scrollTop = targetScrollTop
+  }, [year])
+
   function handleMonthClick(month: number) {
     const element = document.querySelector(`[data-month="${month}"]`)
     if (!element) return
 
-    const scrollContainer = element.closest('[class*="overflow-auto"]')
+    const scrollContainer = findScrollContainer(element)
     if (!scrollContainer) return
 
-    const elementRect = element.getBoundingClientRect()
-    const containerRect = scrollContainer.getBoundingClientRect()
-    const targetScroll = scrollContainer.scrollTop + elementRect.top - containerRect.top - containerRect.height / 2 + elementRect.height / 2
-
+    const targetScroll = calculateScrollToCenter(element, scrollContainer)
     smoothScrollTo(scrollContainer, targetScroll, 200)
   }
 

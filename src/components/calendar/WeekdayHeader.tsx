@@ -26,7 +26,7 @@ export function WeekdayHeader(props: WeekdayHeaderProps) {
 
 function YearViewWeekdayHeader({ daySize }: { daySize: number }) {
   return (
-    <div className='sticky top-0 z-30 bg-background-app border-b w-full'>
+    <div className='sticky top-0 z-30 bg-background-app border-b w-full' data-weekday-header='year-view'>
       <Row className='justify-center mr-28'>
         <Row className='items-center gap-12'>
           <div className='w-56' />

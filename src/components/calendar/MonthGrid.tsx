@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 
 import { Row } from '@/styles'
 import type { CalendarDay, CalendarEvent, MonthGridProps } from './types'
@@ -20,6 +20,7 @@ export function MonthGrid({ year, month, events, daySize }: MonthGridProps) {
   const weeks = groupDaysIntoWeeks(days)
   const monthName = getMonthName(month)
   const ref = useRef<HTMLDivElement>(null)
+  const todayWeekIndex = useMemo(() => weeks.findIndex((week) => week.some((day) => day.isToday)), [weeks])
 
   const today = new Date()
   const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month
@@ -64,13 +65,14 @@ export function MonthGrid({ year, month, events, daySize }: MonthGridProps) {
       {/* Calendar Grid */}
       <div>
         {weeks.map((week, weekIndex) => {
+          const isTodayWeek = weekIndex === todayWeekIndex
           const nonBirthdayEvents = events.filter((event) => !isBirthdayEvent(event))
           const layoutEvents = layoutEventsForWeek(nonBirthdayEvents, week)
           const maxRow = layoutEvents.reduce((max, event) => Math.max(max, event.row), -1)
           const eventRowCount = maxRow + 1
 
           return (
-            <div key={weekIndex} className='relative'>
+            <div key={weekIndex} className='relative' data-today-week={isTodayWeek ? 'true' : undefined}>
               {/* Day Grid */}
               <div className='grid grid-cols-7'>
                 {week.map((day) => (
