@@ -35,9 +35,16 @@ interface ParsedFlights {
 export function FlightInfo(props: FlightInfoProps) {
   const { description, className } = props
 
-  const { hotelDetails, remainingDescription: descriptionWithoutHotel } = extractHotelSection(description)
-  const { carDetails, remainingDescription } = extractCarRentalSection(descriptionWithoutHotel)
-  const parsed = parseAllFlights(remainingDescription)
+  const sanitizedDescription = sanitizeHtml(description)
+  const { details: hotelDetails, remainingDescription: descriptionWithoutHotel } = extractLabeledSection({
+    description: sanitizedDescription,
+    label: 'Hotel',
+  })
+  const { details: carDetails, remainingDescription } = extractLabeledSection({
+    description: descriptionWithoutHotel,
+    label: 'Car Rental',
+  })
+  const parsed = parseAllFlightsFromSanitized(remainingDescription)
   const hasRemainingDescription = remainingDescription.trim().length > 0
 
   // No flights parsed at all - show raw description
@@ -45,8 +52,8 @@ export function FlightInfo(props: FlightInfoProps) {
     return (
       <Column className={cn('mt-3 gap-2', className)}>
         {hasRemainingDescription && <RawDescription description={remainingDescription} />}
-        {hotelDetails && <HotelSection details={hotelDetails} />}
-        {carDetails && <CarRentalSection details={carDetails} />}
+        {hotelDetails && <DetailsSection label='Hotel' icon={Hotel} details={hotelDetails} />}
+        {carDetails && <DetailsSection label='Car Rental' icon={Car} details={carDetails} />}
       </Column>
     )
   }
@@ -70,34 +77,22 @@ export function FlightInfo(props: FlightInfoProps) {
       {hasReturn && <FlightSection label='Return' flights={parsed.return} relativeTime={returnRelative} />}
       {hasOutbound && !hasReturn && <PendingFlightCard label='Return' relativeTime={null} />}
 
-      {hotelDetails && <HotelSection details={hotelDetails} />}
-      {carDetails && <CarRentalSection details={carDetails} />}
+      {hotelDetails && <DetailsSection label='Hotel' icon={Hotel} details={hotelDetails} />}
+      {carDetails && <DetailsSection label='Car Rental' icon={Car} details={carDetails} />}
     </Column>
   )
 }
 
-function HotelSection(props: { details: string }) {
-  const { details } = props
+type IconComponent = (props: { className?: string }) => JSX.Element
+
+function DetailsSection(props: { label: string; icon: IconComponent; details: string }) {
+  const { label, icon: Icon, details } = props
 
   return (
     <div className='rounded-lg border bg-stone-50 p-3 text-sm text-tertiary whitespace-pre-line'>
       <Row className='items-center gap-2 mb-1 text-xs font-medium text-tertiary'>
-        <Hotel className='size-3.5' />
-        <span>Hotel</span>
-      </Row>
-      <Linkify text={details} />
-    </div>
-  )
-}
-
-function CarRentalSection(props: { details: string }) {
-  const { details } = props
-
-  return (
-    <div className='rounded-lg border bg-stone-50 p-3 text-sm text-tertiary whitespace-pre-line'>
-      <Row className='items-center gap-2 mb-1 text-xs font-medium text-tertiary'>
-        <Car className='size-3.5' />
-        <span>Car Rental</span>
+        <Icon className='size-3.5' />
+        <span>{label}</span>
       </Row>
       <Linkify text={details} />
     </div>
@@ -485,96 +480,55 @@ function sanitizeHtml(html: string): string {
   return text.trim()
 }
 
-function extractHotelSection(description: string): { hotelDetails: string | null; remainingDescription: string } {
-  const sanitized = sanitizeHtml(description)
-  if (!sanitized) return { hotelDetails: null, remainingDescription: '' }
+function extractLabeledSection(params: { description: string; label: string }): { details: string | null; remainingDescription: string } {
+  const { description, label } = params
+  if (!description.trim()) return { details: null, remainingDescription: '' }
 
-  const lines = sanitized.split('\n')
+  const labelPattern = new RegExp(`^\\s*${escapeRegex(label)}:\\s*(.*)$`, 'i')
+  const lines = description.split('\n')
   const remainingLines: string[] = []
-  const hotelLines: string[] = []
-  let inHotelSection = false
-  let hotelFound = false
+  const sectionLines: string[] = []
+  let inSection = false
+  let sectionFound = false
 
   for (const line of lines) {
-    if (!hotelFound) {
-      const match = line.match(/^\s*hotel:\s*(.*)$/i)
+    if (!sectionFound) {
+      const match = line.match(labelPattern)
       if (match) {
-        hotelFound = true
-        inHotelSection = true
+        sectionFound = true
+        inSection = true
 
         const firstLine = match[1].trim()
-        if (firstLine) hotelLines.push(firstLine)
+        if (firstLine) sectionLines.push(firstLine)
         continue
       }
     }
 
-    if (inHotelSection) {
+    if (inSection) {
       if (line.trim().length === 0) {
-        inHotelSection = false
+        inSection = false
         remainingLines.push('')
         continue
       }
 
-      hotelLines.push(line.trim())
+      sectionLines.push(line.trim())
       continue
     }
 
     remainingLines.push(line)
   }
 
-  const hotelDetails = hotelLines.join('\n').trim()
+  const details = sectionLines.join('\n').trim()
   const remainingDescription = remainingLines.join('\n').trim()
 
   return {
-    hotelDetails: hotelDetails ? hotelDetails : null,
+    details: details ? details : null,
     remainingDescription,
   }
 }
 
-function extractCarRentalSection(description: string): { carDetails: string | null; remainingDescription: string } {
-  const sanitized = sanitizeHtml(description)
-  if (!sanitized) return { carDetails: null, remainingDescription: '' }
-
-  const lines = sanitized.split('\n')
-  const remainingLines: string[] = []
-  const carLines: string[] = []
-  let inCarSection = false
-  let carFound = false
-
-  for (const line of lines) {
-    if (!carFound) {
-      const match = line.match(/^\s*car rental:\s*(.*)$/i)
-      if (match) {
-        carFound = true
-        inCarSection = true
-
-        const firstLine = match[1].trim()
-        if (firstLine) carLines.push(firstLine)
-        continue
-      }
-    }
-
-    if (inCarSection) {
-      if (line.trim().length === 0) {
-        inCarSection = false
-        remainingLines.push('')
-        continue
-      }
-
-      carLines.push(line.trim())
-      continue
-    }
-
-    remainingLines.push(line)
-  }
-
-  const carDetails = carLines.join('\n').trim()
-  const remainingDescription = remainingLines.join('\n').trim()
-
-  return {
-    carDetails: carDetails ? carDetails : null,
-    remainingDescription,
-  }
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
 /**
@@ -585,7 +539,11 @@ function extractCarRentalSection(description: string): { carDetails: string | nu
  */
 function parseAllFlights(rawDescription: string): ParsedFlights {
   const description = sanitizeHtml(rawDescription)
+  const result = parseAllFlightsFromSanitized(description)
+  return result
+}
 
+function parseAllFlightsFromSanitized(description: string): ParsedFlights {
   const result: ParsedFlights = {
     outbound: [],
     return: [],
