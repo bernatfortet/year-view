@@ -1,10 +1,14 @@
 import { Plane, Car, PlaneLanding } from 'lucide-react'
 
+import { cn } from '@/lib/utils'
 import { Row } from '@/styles'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
 import type { EventBarProps } from './types'
 import { EVENT_COLORS } from './types'
 import { formatMinimalFlightInfo, getTripInfo, isVisitEvent } from './utils'
+import { TripPopoverContent } from './TripPopoverContent'
+import { getTripFromEvent } from '../trips/trip-utils'
 
 export function EventBar({ event }: EventBarProps) {
   // Priority: event's own colorId > calendar's backgroundColor > default
@@ -28,6 +32,8 @@ export function EventBar({ event }: EventBarProps) {
   const tripInfo = getTripInfo(event)
   const showReturnInfo = tripInfo.returnFlight && event.spanDays >= 3
   const isVisit = isVisitEvent(event)
+  const trip = getTripFromEvent(event)
+  const showTripPopover = !!trip
 
   function handleClick() {
     if (event.htmlLink) {
@@ -35,29 +41,76 @@ export function EventBar({ event }: EventBarProps) {
     }
   }
 
+  const baseClassName = `h-4 items-center gap-1 px-1.5 text-[10px] font-medium ${textColor} truncate cursor-pointer hover:brightness-110 pointer-events-auto ${roundedLeft} ${roundedRight} ${marginLeft} ${marginRight}`
+
+  if (!showTripPopover) {
+    return (
+      <Row
+        className={baseClassName}
+        style={{
+          backgroundColor,
+          gridColumn: `${gridColumnStart} / ${gridColumnEnd}`,
+          gridRow: event.row + 1,
+        }}
+        title={event.summary}
+        onClick={handleClick}
+      >
+        {!event.continuesFromPrevious && (
+          <>
+            <EventIcon tripType={tripInfo.tripType} isVisit={isVisit} className={textColor} />
+            <span className='truncate'>{event.summary}</span>
+            {showReturnInfo && (
+              <span className='ml-auto opacity-70 text-[9px] shrink-0'>
+                ↩ {formatMinimalFlightInfo(tripInfo.returnFlight!)}
+              </span>
+            )}
+          </>
+        )}
+      </Row>
+    )
+  }
+
   return (
-    <Row
-      className={`h-4 items-center gap-1 px-1.5 text-[10px] font-medium ${textColor} truncate cursor-pointer hover:brightness-110 pointer-events-auto ${roundedLeft} ${roundedRight} ${marginLeft} ${marginRight}`}
-      style={{
-        backgroundColor,
-        gridColumn: `${gridColumnStart} / ${gridColumnEnd}`,
-        gridRow: event.row + 1,
-      }}
-      title={event.summary}
-      onClick={handleClick}
-    >
-      {!event.continuesFromPrevious && (
-        <>
-          <EventIcon tripType={tripInfo.tripType} isVisit={isVisit} className={textColor} />
-          <span className='truncate'>{event.summary}</span>
-          {showReturnInfo && (
-            <span className='ml-auto opacity-70 text-[9px] shrink-0'>
-              ↩ {formatMinimalFlightInfo(tripInfo.returnFlight!)}
-            </span>
-          )}
-        </>
-      )}
-    </Row>
+    <Popover>
+      <PopoverTrigger
+        openOnHover
+        delay={120}
+        closeDelay={100}
+        nativeButton={false}
+        render={(triggerProps) => (
+          <Row
+            {...triggerProps}
+            className={cn(baseClassName, triggerProps.className)}
+            style={{
+              ...triggerProps.style,
+              backgroundColor,
+              gridColumn: `${gridColumnStart} / ${gridColumnEnd}`,
+              gridRow: event.row + 1,
+            }}
+            onClick={(eventClick) => {
+              triggerProps.onClick?.(eventClick)
+              if (eventClick.defaultPrevented) return
+              handleClick()
+            }}
+          >
+            {!event.continuesFromPrevious && (
+              <>
+                <EventIcon tripType={tripInfo.tripType} isVisit={isVisit} className={textColor} />
+                <span className='truncate'>{event.summary}</span>
+                {showReturnInfo && (
+                  <span className='ml-auto opacity-70 text-[9px] shrink-0'>
+                    ↩ {formatMinimalFlightInfo(tripInfo.returnFlight!)}
+                  </span>
+                )}
+              </>
+            )}
+          </Row>
+        )}
+      />
+      <PopoverContent side='top' align='start' className='p-0'>
+        <TripPopoverContent trip={trip!} />
+      </PopoverContent>
+    </Popover>
   )
 }
 

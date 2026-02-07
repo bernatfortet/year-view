@@ -1,9 +1,11 @@
-import { Plane, Clock } from 'lucide-react'
+import { Plane, Clock, Car, Hotel } from 'lucide-react'
 
+import { cn } from '@/lib/utils'
 import { Row, Column } from '@/styles'
 
 interface FlightInfoProps {
   description: string
+  className?: string
 }
 
 interface ParsedFlight {
@@ -31,13 +33,22 @@ interface ParsedFlights {
 }
 
 export function FlightInfo(props: FlightInfoProps) {
-  const { description } = props
+  const { description, className } = props
 
-  const parsed = parseAllFlights(description)
+  const { hotelDetails, remainingDescription: descriptionWithoutHotel } = extractHotelSection(description)
+  const { carDetails, remainingDescription } = extractCarRentalSection(descriptionWithoutHotel)
+  const parsed = parseAllFlights(remainingDescription)
+  const hasRemainingDescription = remainingDescription.trim().length > 0
 
   // No flights parsed at all - show raw description
   if (parsed.outbound.length === 0 && parsed.return.length === 0) {
-    return <RawDescription description={description} />
+    return (
+      <Column className={cn('mt-3 gap-2', className)}>
+        {hasRemainingDescription && <RawDescription description={remainingDescription} />}
+        {hotelDetails && <HotelSection details={hotelDetails} />}
+        {carDetails && <CarRentalSection details={carDetails} />}
+      </Column>
+    )
   }
 
   const hasOutbound = parsed.outbound.length > 0
@@ -50,7 +61,7 @@ export function FlightInfo(props: FlightInfoProps) {
   const returnRelative = returnDate ? getRelativeTimeLabelFromShortDate(returnDate) : null
 
   return (
-    <Column className='mt-3 gap-2'>
+    <Column className={cn('mt-3 gap-2', className)}>
       {parsed.confirmation && <ConfirmationBadge code={parsed.confirmation} />}
 
       {hasOutbound && <FlightSection label='Outbound' flights={parsed.outbound} relativeTime={outboundRelative} />}
@@ -58,7 +69,38 @@ export function FlightInfo(props: FlightInfoProps) {
 
       {hasReturn && <FlightSection label='Return' flights={parsed.return} relativeTime={returnRelative} />}
       {hasOutbound && !hasReturn && <PendingFlightCard label='Return' relativeTime={null} />}
+
+      {hotelDetails && <HotelSection details={hotelDetails} />}
+      {carDetails && <CarRentalSection details={carDetails} />}
     </Column>
+  )
+}
+
+function HotelSection(props: { details: string }) {
+  const { details } = props
+
+  return (
+    <div className='rounded-lg border bg-stone-50 p-3 text-sm text-tertiary whitespace-pre-line'>
+      <Row className='items-center gap-2 mb-1 text-xs font-medium text-tertiary'>
+        <Hotel className='size-3.5' />
+        <span>Hotel</span>
+      </Row>
+      <Linkify text={details} />
+    </div>
+  )
+}
+
+function CarRentalSection(props: { details: string }) {
+  const { details } = props
+
+  return (
+    <div className='rounded-lg border bg-stone-50 p-3 text-sm text-tertiary whitespace-pre-line'>
+      <Row className='items-center gap-2 mb-1 text-xs font-medium text-tertiary'>
+        <Car className='size-3.5' />
+        <span>Car Rental</span>
+      </Row>
+      <Linkify text={details} />
+    </div>
   )
 }
 
@@ -320,7 +362,7 @@ function RawDescription(props: { description: string }) {
   const sanitized = sanitizeHtml(description)
 
   return (
-    <div className='mt-3 rounded-lg border bg-stone-50 p-3 text-sm text-tertiary whitespace-pre-line'>
+    <div className='rounded-lg border bg-stone-50 p-3 text-sm text-tertiary whitespace-pre-line'>
       <Linkify text={sanitized} />
     </div>
   )
@@ -441,6 +483,98 @@ function sanitizeHtml(html: string): string {
   text = text.replace(/&#39;/gi, "'")
 
   return text.trim()
+}
+
+function extractHotelSection(description: string): { hotelDetails: string | null; remainingDescription: string } {
+  const sanitized = sanitizeHtml(description)
+  if (!sanitized) return { hotelDetails: null, remainingDescription: '' }
+
+  const lines = sanitized.split('\n')
+  const remainingLines: string[] = []
+  const hotelLines: string[] = []
+  let inHotelSection = false
+  let hotelFound = false
+
+  for (const line of lines) {
+    if (!hotelFound) {
+      const match = line.match(/^\s*hotel:\s*(.*)$/i)
+      if (match) {
+        hotelFound = true
+        inHotelSection = true
+
+        const firstLine = match[1].trim()
+        if (firstLine) hotelLines.push(firstLine)
+        continue
+      }
+    }
+
+    if (inHotelSection) {
+      if (line.trim().length === 0) {
+        inHotelSection = false
+        remainingLines.push('')
+        continue
+      }
+
+      hotelLines.push(line.trim())
+      continue
+    }
+
+    remainingLines.push(line)
+  }
+
+  const hotelDetails = hotelLines.join('\n').trim()
+  const remainingDescription = remainingLines.join('\n').trim()
+
+  return {
+    hotelDetails: hotelDetails ? hotelDetails : null,
+    remainingDescription,
+  }
+}
+
+function extractCarRentalSection(description: string): { carDetails: string | null; remainingDescription: string } {
+  const sanitized = sanitizeHtml(description)
+  if (!sanitized) return { carDetails: null, remainingDescription: '' }
+
+  const lines = sanitized.split('\n')
+  const remainingLines: string[] = []
+  const carLines: string[] = []
+  let inCarSection = false
+  let carFound = false
+
+  for (const line of lines) {
+    if (!carFound) {
+      const match = line.match(/^\s*car rental:\s*(.*)$/i)
+      if (match) {
+        carFound = true
+        inCarSection = true
+
+        const firstLine = match[1].trim()
+        if (firstLine) carLines.push(firstLine)
+        continue
+      }
+    }
+
+    if (inCarSection) {
+      if (line.trim().length === 0) {
+        inCarSection = false
+        remainingLines.push('')
+        continue
+      }
+
+      carLines.push(line.trim())
+      continue
+    }
+
+    remainingLines.push(line)
+  }
+
+  const carDetails = carLines.join('\n').trim()
+  const remainingDescription = remainingLines.join('\n').trim()
+
+  return {
+    carDetails: carDetails ? carDetails : null,
+    remainingDescription,
+  }
 }
 
 /**

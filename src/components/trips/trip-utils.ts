@@ -27,7 +27,7 @@ export function filterAndEnrichTrips(events: CalendarEvent[]): Trip[] {
 /**
  * Determines if an event is a trip or visit based on its title
  */
-function isTripOrVisitEvent(event: CalendarEvent): boolean {
+export function isTripOrVisitEvent(event: CalendarEvent): boolean {
   const summaryLower = event.summary.toLowerCase()
 
   return summaryLower.includes('trip') || summaryLower.startsWith('visit:')
@@ -54,6 +54,16 @@ function enrichTripWithStatus(event: CalendarEvent, today: Date): Trip {
     isPast,
     isVisit,
   }
+}
+
+export function getTripFromEvent(event: CalendarEvent): Trip | null {
+  if (!isTripOrVisitEvent(event)) return null
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const trip = enrichTripWithStatus(event, today)
+  return trip
 }
 
 /**

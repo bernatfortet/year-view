@@ -2,7 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useStore } from '@nanostores/react'
 import { Plane, Car } from 'lucide-react'
 
+import { cn } from '@/lib/utils'
 import { Row } from '@/styles'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import type { CalendarDay, CalendarEvent, TentativeInfo, YearViewProps } from './types'
 import { EVENT_COLORS } from './types'
 import { DayCell } from './DayCell'
@@ -18,6 +20,8 @@ import {
   isVisitEvent,
   parseDateString,
 } from './utils'
+import { TripPopoverContent } from './TripPopoverContent'
+import { getTripFromEvent } from '../trips/trip-utils'
 
 const MIN_CELL_SIZE = 60
 
@@ -496,6 +500,8 @@ function EventBarSegment(props: EventBarSegmentProps) {
   const tripInfo = getTripInfo(event)
   const spanDays = gridColumnEnd - gridColumnStart
   const showReturnInfo = tripInfo.returnFlight && spanDays >= 4 && width > 300
+  const trip = getTripFromEvent(event)
+  const showTripPopover = !!trip
 
   function handleClick() {
     if (event.htmlLink) {
@@ -503,40 +509,98 @@ function EventBarSegment(props: EventBarSegmentProps) {
     }
   }
 
-  return (
-    <div
-      className='absolute pointer-events-auto cursor-pointer z-10'
-      style={{
-        left,
-        top,
-        width,
-        height: BAR_HEIGHT,
-      }}
-      onClick={handleClick}
-    >
+  const baseWrapperClassName = 'absolute pointer-events-auto cursor-pointer z-10'
+  const baseBarClassName = `h-full overflow-hidden text-ellipsis whitespace-nowrap text-[10px] font-medium leading-[14px] px-1 hover:brightness-110 ${textColor}`
+
+  if (!showTripPopover) {
+    return (
       <div
-        className={`h-full overflow-hidden text-ellipsis whitespace-nowrap text-[10px] font-medium leading-[14px] px-1 hover:brightness-110 ${textColor}`}
+        className={baseWrapperClassName}
         style={{
-          backgroundColor,
-          borderRadius: isStart && isEnd ? 4 : isStart ? '4px 0 0 4px' : isEnd ? '0 4px 4px 0' : 0,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 4,
+          left,
+          top,
+          width,
           height: BAR_HEIGHT,
         }}
-        title={event.summary}
+        onClick={handleClick}
       >
-        {isStart && (
-          <>
-            <TripIcon tripType={tripInfo.tripType} className={textColor} />
-            <span className='truncate'>{event.summary}</span>
-            {showReturnInfo && (
-              <span className='ml-auto opacity-70 text-[9px] shrink-0'>↩ {formatMinimalFlightInfo(tripInfo.returnFlight!)}</span>
-            )}
-          </>
-        )}
+        <div
+          className={baseBarClassName}
+          style={{
+            backgroundColor,
+            borderRadius: isStart && isEnd ? 4 : isStart ? '4px 0 0 4px' : isEnd ? '0 4px 4px 0' : 0,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+            height: BAR_HEIGHT,
+          }}
+        >
+          {isStart && (
+            <>
+              <TripIcon tripType={tripInfo.tripType} className={textColor} />
+              <span className='truncate'>{event.summary}</span>
+              {showReturnInfo && (
+                <span className='ml-auto opacity-70 text-[9px] shrink-0'>↩ {formatMinimalFlightInfo(tripInfo.returnFlight!)}</span>
+              )}
+            </>
+          )}
+        </div>
       </div>
-    </div>
+    )
+  }
+
+  return (
+    <Popover>
+      <PopoverTrigger
+        openOnHover
+        delay={120}
+        closeDelay={100}
+        nativeButton={false}
+        render={(triggerProps) => (
+          <div
+            {...triggerProps}
+            className={cn(baseWrapperClassName, triggerProps.className)}
+            style={{
+              ...triggerProps.style,
+              left,
+              top,
+              width,
+              height: BAR_HEIGHT,
+            }}
+            onClick={(eventClick) => {
+              triggerProps.onClick?.(eventClick)
+              if (eventClick.defaultPrevented) return
+              handleClick()
+            }}
+          >
+            <div
+              className={baseBarClassName}
+              style={{
+                backgroundColor,
+                borderRadius: isStart && isEnd ? 4 : isStart ? '4px 0 0 4px' : isEnd ? '0 4px 4px 0' : 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                height: BAR_HEIGHT,
+              }}
+            >
+              {isStart && (
+                <>
+                  <TripIcon tripType={tripInfo.tripType} className={textColor} />
+                  <span className='truncate'>{event.summary}</span>
+                  {showReturnInfo && (
+                    <span className='ml-auto opacity-70 text-[9px] shrink-0'>↩ {formatMinimalFlightInfo(tripInfo.returnFlight!)}</span>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        )}
+      />
+      <PopoverContent side='top' align='start' className='p-0'>
+        <TripPopoverContent trip={trip!} />
+      </PopoverContent>
+    </Popover>
   )
 }
 
