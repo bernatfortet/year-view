@@ -34,7 +34,10 @@ function getHeaderHeight(scrollContainer: Element, headerSelector: string): numb
   return headerElement instanceof HTMLElement ? headerElement.getBoundingClientRect().height : 0
 }
 
-export function YearView({ year, events, daySize = DEFAULT_DAY_SIZE }: YearViewProps) {
+export function YearView({ year, events, daySize = DEFAULT_DAY_SIZE, layoutMode = 'full' }: YearViewProps) {
+  const isEmbedded = layoutMode === 'embedded'
+  const rootClassName = getRootClassName({ isEmbedded })
+  const monthRailClassName = getMonthRailClassName({ isEmbedded })
   const months = Array.from({ length: 12 }, (_, index) => index)
   const activeMonth = useStore($activeMonth)
   const isSyncing = useStore($isSyncingEvents)
@@ -67,9 +70,9 @@ export function YearView({ year, events, daySize = DEFAULT_DAY_SIZE }: YearViewP
   }
 
   return (
-    <div className='min-h-screen'>
+    <div className={rootClassName}>
       {/* Fixed Month Sidebar - Right side, centered vertically */}
-      <Column className='fixed right-0 top-10 bottom-0 w-28 justify-center z-10'>
+      <Column className={monthRailClassName}>
         {/* Sync indicator */}
         {isSyncing && (
           <Row className='absolute top-4 left-4 items-center gap-1.5 text-xs text-tertiary'>
@@ -108,6 +111,21 @@ export function YearView({ year, events, daySize = DEFAULT_DAY_SIZE }: YearViewP
       </Column>
     </div>
   )
+}
+
+function getRootClassName(props: { isEmbedded: boolean }) {
+  const { isEmbedded } = props
+  if (isEmbedded) return 'relative min-h-full'
+  return 'min-h-screen'
+}
+
+function getMonthRailClassName(props: { isEmbedded: boolean }) {
+  const { isEmbedded } = props
+  if (isEmbedded) {
+    return 'absolute right-0 top-0 bottom-0 w-28 justify-center z-10 border-l border-stone-200 bg-background-app/90 backdrop-blur-sm'
+  }
+
+  return 'fixed right-0 top-10 bottom-0 w-28 justify-center z-10'
 }
 
 function smoothScrollTo(element: Element, targetPosition: number, duration: number) {
