@@ -43,6 +43,7 @@ export interface YearViewProps {
   year: number
   events: CalendarEvent[]
   daySize?: number
+  layoutMode?: 'full' | 'embedded'
 }
 
 /**
