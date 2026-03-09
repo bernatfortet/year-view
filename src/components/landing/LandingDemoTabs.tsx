@@ -1,12 +1,13 @@
 import { useState } from 'react'
-import { CalendarIcon, Car, CircleHelp, Gift, Grid3x3, Plane, PlaneLanding, Sparkles } from 'lucide-react'
+import { CalendarIcon, CircleHelp, Gift, Grid3x3, Plane, PlaneLanding, Sparkles } from 'lucide-react'
 
 import { LinearYearView } from '@/components/calendar/LinearYearView'
 import type { CalendarEvent } from '@/components/calendar/types'
 import { YearView } from '@/components/calendar/YearView'
 import { TripsView } from '@/components/trips/TripsView'
-import { Column, Row } from '@/styles'
 import { demoEvents } from '@/data/demo-data'
+import { getPreviewYearFromDemoEvents } from '@/data/demo-utils'
+import { Column, Row } from '@/styles'
 
 type LandingTab = 'year' | 'linear' | 'trips' | 'magic'
 
@@ -34,40 +35,96 @@ const LANDING_TABS: LandingTabConfig[] = [
   },
   {
     id: 'magic',
-    label: 'Magical Behavior',
+    label: 'Magic Rules',
     icon: <Sparkles className='w-4 h-4' />,
   },
 ]
 
 const LANDING_PREVIEW_DAY_SIZE = 66
 
+const YEAR_PREVIEW_EVENT_IDS = [
+  'school-spring-break',
+  'tentative-spring-trip',
+  'trip-national-park-apr',
+  'work-offsite-q2',
+  'trip-coast-may',
+  'family-mothers-day',
+  'trip-memorial-lake',
+  'holiday-memorial',
+  'school-summer-break',
+  'work-summit-jun',
+  'trip-europe-summer',
+  'family-fathers-day',
+  'work-offsite-q3',
+  'trip-camping-aug',
+  'school-first-day',
+]
+
+const LINEAR_PREVIEW_EVENT_IDS = [
+  'work-offsite-q1',
+  'holiday-mlk',
+  'trip-presidents-weekend',
+  'family-birthday-kid',
+  'trip-wine-country',
+  'work-conference-mar',
+  'school-spring-break',
+  'tentative-spring-trip',
+  'trip-national-park-apr',
+  'work-offsite-q2',
+  'trip-coast-may',
+  'family-mothers-day',
+  'trip-europe-summer',
+  'holiday-july4',
+  'trip-camping-aug',
+  'trip-labor-beach',
+  'work-training-sep',
+  'family-anniversary',
+  'trip-fall-foliage',
+  'work-offsite-q4',
+  'holiday-thanksgiving',
+  'trip-thanksgiving-family',
+  'holiday-christmas',
+  'trip-ski-christmas',
+]
+
+const TRIPS_PREVIEW_EVENT_IDS = [
+  'tentative-spring-trip',
+  'trip-coast-may',
+  'trip-europe-summer',
+  'trip-camping-aug',
+  'trip-ski-christmas',
+]
+
 const MAGIC_ITEMS = [
   {
     title: 'Tentative plans',
-    description: 'Add a question mark (?) anywhere in the event title and those days are highlighted automatically.',
-    example: 'Trip to Paris?',
+    description: 'Add a question mark (?) anywhere in the title and those days are highlighted automatically.',
+    example: 'Spring Break Trip (Maybe)',
     icon: CircleHelp,
   },
   {
     title: 'Birthday grouping',
-    description: 'Birthdays are grouped into compact badges so busy weeks stay readable.',
-    example: "Emma's Birthday",
+    description: 'Birthdays collapse into compact badges so busy weeks stay readable.',
+    example: "Emma's Birthday Party",
     icon: Gift,
   },
   {
     title: 'Trips and visits',
-    description: 'Events with Trip or Visit: are promoted into dedicated trip cards with status and travel details.',
-    example: 'Visit: Mom & Dad',
+    description: 'Trip and Visit titles become dedicated trip cards with travel context.',
+    example: 'Europe Trip - Italy & France',
     icon: PlaneLanding,
   },
   {
-    title: 'Travel mode icons',
-    description: 'Trip titles containing Car show car icons while flights keep plane icons.',
-    example: 'Car Trip to Napa',
-    icon: Car,
+    title: 'Cross-calendar story',
+    description: 'School breaks, work trips, holidays, and family plans line up in one year-wide timeline.',
+    example: 'Spring Break + team offsite + Yosemite Weekend',
+    icon: Plane,
   },
 ] as const
 
+const yearPreviewEvents = pickEvents(YEAR_PREVIEW_EVENT_IDS)
+const linearPreviewEvents = pickEvents(LINEAR_PREVIEW_EVENT_IDS)
+const tripsPreviewEvents = pickEvents(TRIPS_PREVIEW_EVENT_IDS)
 export function LandingDemoTabs() {
   const [activeTab, setActiveTab] = useState<LandingTab>('year')
   const previewYear = getPreviewYearFromDemoEvents(demoEvents)
@@ -109,38 +166,39 @@ function LandingTabPanel(props: LandingTabPanelProps) {
   const { activeTab, previewYear } = props
 
   if (activeTab === 'year') {
-    return <YearView year={previewYear} events={demoEvents} daySize={LANDING_PREVIEW_DAY_SIZE} layoutMode='embedded' />
+    return (
+      <div className='pointer-events-none'>
+        <YearView year={previewYear} events={yearPreviewEvents} daySize={LANDING_PREVIEW_DAY_SIZE} layoutMode='embedded' />
+      </div>
+    )
   }
 
   if (activeTab === 'linear') {
-    return <LinearYearView year={previewYear} events={demoEvents} layoutMode='embedded' />
+    return (
+      <div className='pointer-events-none'>
+        <LinearYearView year={previewYear} events={linearPreviewEvents} layoutMode='embedded' />
+      </div>
+    )
   }
 
   if (activeTab === 'trips') {
-    return <TripsView events={demoEvents} year={previewYear} />
+    return (
+      <div className='pointer-events-none [&_nav]:hidden [&_[data-slot=tabs-list]]:hidden [&_h2]:hidden [&_.max-w-4xl]:max-w-none [&_.mx-auto]:mx-0 [&_.px-4]:px-8 [&_.py-8]:py-8'>
+        <TripsView events={tripsPreviewEvents} year={previewYear} />
+      </div>
+    )
   }
 
-  return <MagicDemoPanel />
+  return <MagicRulesPanel />
 }
 
-function getPreviewYearFromDemoEvents(events: CalendarEvent[]): number {
-  if (events.length === 0) return new Date().getFullYear()
-
-  const firstEvent = events[0]
-  const startYear = Number.parseInt(firstEvent?.startDate.slice(0, 4), 10)
-
-  if (Number.isNaN(startYear)) return new Date().getFullYear()
-
-  return startYear
-}
-
-function MagicDemoPanel() {
+function MagicRulesPanel() {
   return (
     <Column className='p-8 gap-6'>
       <Column className='gap-2'>
-        <h3 className='text-2xl text-brand-blue font-semibold'>Magic behaviors with real data</h3>
+        <h3 className='text-2xl text-brand-blue font-semibold'>Magic rules with real calendar data</h3>
         <p className='text-sm text-gray-600 max-w-2xl'>
-          YearTrips detects patterns in your existing calendar titles and turns them into useful visual layers automatically.
+          YearTrips reads patterns already hiding in your titles and turns them into clearer visual layers automatically.
         </p>
       </Column>
 
@@ -167,4 +225,10 @@ function MagicDemoPanel() {
       </Column>
     </Column>
   )
+}
+
+function pickEvents(ids: string[]): CalendarEvent[] {
+  const idSet = new Set(ids)
+  const result = demoEvents.filter((event) => idSet.has(event.id))
+  return result
 }

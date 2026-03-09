@@ -3,6 +3,7 @@ import { SlidersHorizontalIcon } from "lucide-react"
 import { Row, Column } from "@/styles"
 import { useAuth } from "@/context/AuthContext"
 import { useCalendars } from "@/context/CalendarContext"
+import { useDemoMode } from "@/context/DemoContext"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Separator } from "@/components/ui/separator"
@@ -15,6 +16,7 @@ interface CalendarsByAccount {
 
 export function CalendarSidebar() {
   const { user, isAuthenticated, signOut, signIn } = useAuth()
+  const isDemoMode = useDemoMode()
   const {
     calendars,
     selectedCalendarIds,
@@ -24,9 +26,14 @@ export function CalendarSidebar() {
     refreshCalendars,
   } = useCalendars()
 
-  const calendarsByAccount: CalendarsByAccount[] = user?.email
-    ? [{ email: user.email, calendars }]
-    : []
+  const calendarsByAccount: CalendarsByAccount[] = getCalendarsByAccount({
+    calendars,
+    isDemoMode,
+    userEmail: user?.email,
+  })
+
+  const shouldShowSignInState = !isDemoMode && !isAuthenticated
+  const shouldShowFooter = isAuthenticated && !isDemoMode
 
   return (
     <Column className="h-full">
@@ -39,7 +46,9 @@ export function CalendarSidebar() {
 
       {/* Calendar List */}
       <div className="flex-1 overflow-auto px-2 py-2">
-        {!isAuthenticated ? (
+        {isDemoMode && <DemoSidebarIntro />}
+
+        {shouldShowSignInState ? (
           <div className="p-4">
             <p className="text-sm text-muted-foreground mb-4">
               Sign in to view your calendars
@@ -76,10 +85,12 @@ export function CalendarSidebar() {
                   {account.email}
                 </span>
 
-                <Button variant="ghost" size="icon-xs">
-                  <SlidersHorizontalIcon />
-                  <span className="sr-only">Calendar settings</span>
-                </Button>
+                {!isDemoMode && (
+                  <Button variant="ghost" size="icon-xs">
+                    <SlidersHorizontalIcon />
+                    <span className="sr-only">Calendar settings</span>
+                  </Button>
+                )}
               </Row>
 
               {/* Calendar Items */}
@@ -99,7 +110,7 @@ export function CalendarSidebar() {
       </div>
 
       {/* Footer */}
-      {isAuthenticated && (
+      {shouldShowFooter && (
         <div className="p-4 border-t">
           <Button variant="secondary" className="w-full" onClick={signOut}>
             Sign out
@@ -108,6 +119,29 @@ export function CalendarSidebar() {
       )}
     </Column>
   )
+}
+
+function DemoSidebarIntro() {
+  return (
+    <div className="px-4 py-4">
+      <p className="text-sm font-medium text-foreground">Demo calendars</p>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Toggle the personal, work, and school calendars that power this walkthrough.
+      </p>
+    </div>
+  )
+}
+
+function getCalendarsByAccount(params: { calendars: GoogleCalendar[]; isDemoMode: boolean; userEmail?: string }): CalendarsByAccount[] {
+  const { calendars, isDemoMode, userEmail } = params
+
+  if (isDemoMode) {
+    return [{ email: "Demo calendars", calendars }]
+  }
+
+  if (!userEmail) return []
+
+  return [{ email: userEmail, calendars }]
 }
 
 interface CalendarItemProps {
