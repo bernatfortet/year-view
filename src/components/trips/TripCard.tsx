@@ -1,8 +1,11 @@
+import { useState } from 'react'
 import { Calendar, Car, CheckCircle2, Mail, Plane, PlaneLanding, ExternalLink } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
+import { useDemoMode } from '@/context/DemoContext'
 import { Row, Column } from '@/styles'
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
 import type { Trip } from './trip-utils'
 import { formatTripDateRange, getTripDisplayName } from './trip-utils'
@@ -16,43 +19,70 @@ interface TripCardProps {
 
 export function TripCard(props: TripCardProps) {
   const { trip } = props
+  const isDemoMode = useDemoMode()
+  const [isDemoDialogOpen, setIsDemoDialogOpen] = useState(false)
 
   const displayName = getTripDisplayName(trip)
   const dateRange = formatTripDateRange(trip)
   const emailLink = extractGmailLink(trip.description)
   const cleanedDescription = stripGmailLink(trip.description)
 
+  function handleCardClick(event: React.MouseEvent<HTMLAnchorElement>) {
+    if (!isDemoMode || trip.htmlLink) return
+
+    event.preventDefault()
+    setIsDemoDialogOpen(true)
+  }
+
   return (
-    <a
-      href={trip.htmlLink ?? '#'}
-      target='_blank'
-      rel='noopener noreferrer'
-      className={cn(
-        'group block rounded-xl border bg-card p-4 transition-all hover:shadow-md hover:border-stone-300',
-        trip.isPast && 'opacity-50',
-      )}
-    >
-      <Row className='items-start gap-3'>
-        <StatusIcon trip={trip} />
+    <>
+      <a
+        href={trip.htmlLink ?? '#'}
+        target='_blank'
+        rel='noopener noreferrer'
+        className={cn(
+          'group block rounded-xl border bg-card p-4 transition-all hover:shadow-md hover:border-stone-300',
+          trip.isPast && 'opacity-50',
+        )}
+        onClick={handleCardClick}
+      >
+        <Row className='items-start gap-3'>
+          <StatusIcon trip={trip} />
 
-        <Column className='flex-1 min-w-0'>
-          <Row className='items-center gap-2'>
-            <h3 className='font-semibold text-[16px] text-primary truncate'>{displayName}</h3>
-            {trip.tripStatus === 'todo' && <TodoBadge />}
-            {trip.tripStatus === 'pending' && <NeedsInfoBadge />}
-            {trip.tripStatus === 'has-info' && trip.summary.includes('?') && <TentativeBadge />}
-            {emailLink && <ViewEmailLink href={emailLink} />}
-            <ExternalLink className='size-3.5 text-tertiary opacity-0 group-hover:opacity-100 transition-opacity shrink-0' />
+          <Column className='flex-1 min-w-0'>
+            <Row className='items-center gap-2'>
+              <h3 className='font-semibold text-[16px] text-primary truncate'>{displayName}</h3>
+              {trip.tripStatus === 'todo' && <TodoBadge />}
+              {trip.tripStatus === 'pending' && <NeedsInfoBadge />}
+              {trip.tripStatus === 'has-info' && trip.summary.includes('?') && <TentativeBadge />}
+              {emailLink && <ViewEmailLink href={emailLink} />}
+              <ExternalLink className='size-3.5 text-tertiary opacity-0 group-hover:opacity-100 transition-opacity shrink-0' />
+            </Row>
+
+            <p className='text-[13px] text-tertiary font-medium'>{dateRange}</p>
+
+            {trip.tripStatus === 'has-info' && cleanedDescription && <FlightInfo description={cleanedDescription} />}
+          </Column>
+
+          <TripMinimap startDate={trip.startDate} endDate={trip.endDate} tripStatus={trip.tripStatus} />
+        </Row>
+      </a>
+
+      <Dialog open={isDemoDialogOpen} onOpenChange={setIsDemoDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Open in Google Calendar</DialogTitle>
+            <DialogDescription>
+              After you sign in, clicking on an event card will open the event in Google Calendar.
+            </DialogDescription>
+          </DialogHeader>
+
+          <Row className='justify-end'>
+            <Button onClick={() => setIsDemoDialogOpen(false)}>Got it</Button>
           </Row>
-
-          <p className='text-[13px] text-tertiary font-medium'>{dateRange}</p>
-
-          {trip.tripStatus === 'has-info' && cleanedDescription && <FlightInfo description={cleanedDescription} />}
-        </Column>
-
-        <TripMinimap startDate={trip.startDate} endDate={trip.endDate} tripStatus={trip.tripStatus} />
-      </Row>
-    </a>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
 

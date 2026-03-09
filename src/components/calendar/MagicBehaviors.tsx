@@ -84,10 +84,10 @@ export function MagicBehaviors() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className='flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 rounded-md transition-colors cursor-pointer'
+        className='flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium whitespace-nowrap text-white/80 hover:text-white hover:bg-white/10 rounded-md transition-colors cursor-pointer'
       >
         <SparklesIcon className='w-3.5 h-3.5' />
-        Magic
+        Magic Rules
       </button>
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -97,7 +97,7 @@ export function MagicBehaviors() {
               <DialogHeader className='mb-4'>
                 <DialogTitle className='flex items-center gap-2 text-base'>
                   <SparklesIcon className='w-4 h-4 text-orange-500' />
-                  Magic behaviors
+                  Magic rules
                 </DialogTitle>
               </DialogHeader>
 

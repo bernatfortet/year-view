@@ -25,7 +25,10 @@ import { getTripFromEvent } from '../trips/trip-utils'
 
 const MIN_CELL_SIZE = 60
 
-export function LinearYearView({ year, events }: YearViewProps) {
+export function LinearYearView({ year, events, layoutMode = 'full' }: YearViewProps) {
+  const isEmbedded = layoutMode === 'embedded'
+  const rootClassName = getLinearViewRootClassName({ isEmbedded })
+  const syncingIndicatorClassName = getSyncingIndicatorClassName({ isEmbedded })
   const isSyncing = useStore($isSyncingEvents)
   const containerRef = useRef<HTMLDivElement>(null)
   const [columns, setColumns] = useState(7)
@@ -85,10 +88,10 @@ export function LinearYearView({ year, events }: YearViewProps) {
   )
 
   return (
-    <div ref={containerRef} className='min-h-screen'>
+    <div ref={containerRef} className={rootClassName}>
       {/* Sync indicator */}
       {isSyncing && (
-        <Row className='fixed top-16 right-8 items-center gap-1.5 text-xs text-tertiary z-20'>
+        <Row className={syncingIndicatorClassName}>
           <div className='w-2.5 h-2.5 border-2 border-tertiary border-t-transparent rounded-full animate-spin' />
           <span>Syncing</span>
         </Row>
@@ -136,6 +139,18 @@ export function LinearYearView({ year, events }: YearViewProps) {
       </div>
     </div>
   )
+}
+
+function getLinearViewRootClassName(props: { isEmbedded: boolean }) {
+  const { isEmbedded } = props
+  if (isEmbedded) return 'relative min-h-full'
+  return 'min-h-screen'
+}
+
+function getSyncingIndicatorClassName(props: { isEmbedded: boolean }) {
+  const { isEmbedded } = props
+  if (isEmbedded) return 'absolute top-4 right-4 items-center gap-1.5 text-xs text-tertiary z-20'
+  return 'fixed top-16 right-8 items-center gap-1.5 text-xs text-tertiary z-20'
 }
 
 type DayInfo = {

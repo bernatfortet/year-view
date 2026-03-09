@@ -6,7 +6,7 @@ import { YearView } from '../components/calendar/YearView'
 import { LinearYearView } from '../components/calendar/LinearYearView'
 import { TripsView } from '../components/trips/TripsView'
 import { useCalendars } from '../context/CalendarContext'
-import { demoEvents } from '../data/demo-data'
+import { filterDemoEvents } from '../data/demo-utils'
 import { $year } from '../components/calendar/calendar.store'
 import { $activeView } from '../stores/view.store'
 import { $excludeTerms } from '../stores/settings.store'
@@ -23,23 +23,15 @@ function DemoPage() {
   const { selectedCalendarIds } = useCalendars()
   const selectedIds = useMemo(() => Array.from(selectedCalendarIds), [selectedCalendarIds])
 
-  // Filter events by selected calendars and exclude terms
   const filteredEvents = useMemo(() => {
-    const selectedSet = new Set(selectedIds)
-
-    const calendarFiltered = demoEvents.filter((event) => selectedSet.has(event.calendarId))
-
-    if (excludeTerms.length === 0) return calendarFiltered
-
-    const result = calendarFiltered.filter((event) => {
-      const summaryLower = event.summary.toLowerCase()
-      const matchesExcludeTerm = excludeTerms.some((term) => summaryLower.includes(term.toLowerCase()))
-
-      return !matchesExcludeTerm
+    const result = filterDemoEvents({
+      year,
+      selectedCalendarIds: selectedIds,
+      excludeTerms,
     })
 
     return result
-  }, [selectedIds, excludeTerms])
+  }, [year, selectedIds, excludeTerms])
 
   return (
     <div className='relative'>
