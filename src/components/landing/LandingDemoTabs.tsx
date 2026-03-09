@@ -125,7 +125,6 @@ const MAGIC_ITEMS = [
 const yearPreviewEvents = pickEvents(YEAR_PREVIEW_EVENT_IDS)
 const linearPreviewEvents = pickEvents(LINEAR_PREVIEW_EVENT_IDS)
 const tripsPreviewEvents = pickEvents(TRIPS_PREVIEW_EVENT_IDS)
-
 export function LandingDemoTabs() {
   const [activeTab, setActiveTab] = useState<LandingTab>('year')
   const previewYear = getPreviewYearFromDemoEvents(demoEvents)
