@@ -44,6 +44,8 @@ export interface YearViewProps {
   events: CalendarEvent[]
   daySize?: number
   layoutMode?: 'full' | 'embedded'
+  visibleMonths?: number[]
+  showMonthRail?: boolean
 }
 
 /**
