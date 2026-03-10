@@ -40,7 +40,7 @@ export function LandingPage(props: Props) {
           <div className='flex items-center justify-center gap-4 mb-6'>
             <Button
               onClick={signIn}
-              className='h-12 inline-flex items-center gap-3 px-7 bg-white/90 backdrop-blur-sm text-gray-800 rounded-full hover:bg-white transition-all shadow-sm'
+              className='h-12 inline-flex items-center gap-3 px-7 bg-white/90 backdrop-blur-sm text-[14px] text-gray-800 rounded-full hover:bg-white transition-all shadow-sm'
             >
               <GoogleIcon />
               <span className='font-medium'>Sign in with Google</span>
@@ -48,7 +48,7 @@ export function LandingPage(props: Props) {
 
             <Link
               to='/try-demo'
-              className='h-12 inline-flex items-center justify-center gap-2 px-7 bg-black/10 backdrop-blur-sm text-gray-700 rounded-full hover:bg-black/15 transition-all'
+              className='h-12 inline-flex items-center justify-center gap-2 px-7 bg-black/10 backdrop-blur-sm text-[14px] text-gray-700 rounded-full hover:bg-black/15 transition-all'
             >
               <span className='font-medium'>Try Demo</span>
             </Link>
