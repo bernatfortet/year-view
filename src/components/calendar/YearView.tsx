@@ -10,6 +10,7 @@ import { $isSyncingEvents } from '@/stores/events.store'
 import { getMonthName } from './utils'
 
 const DEFAULT_DAY_SIZE = 100
+const FULL_YEAR_MONTHS = Array.from({ length: 12 }, (_, index) => index)
 
 function findScrollContainer(element: Element | null): Element | null {
   if (!element) return null
@@ -34,15 +35,27 @@ function getHeaderHeight(scrollContainer: Element, headerSelector: string): numb
   return headerElement instanceof HTMLElement ? headerElement.getBoundingClientRect().height : 0
 }
 
-export function YearView({ year, events, daySize = DEFAULT_DAY_SIZE, layoutMode = 'full' }: YearViewProps) {
+export function YearView(props: YearViewProps) {
+  const {
+    year,
+    events,
+    daySize = DEFAULT_DAY_SIZE,
+    layoutMode = 'full',
+    visibleMonths = FULL_YEAR_MONTHS,
+    showMonthRail = true,
+  } = props
+
   const isEmbedded = layoutMode === 'embedded'
   const rootClassName = getRootClassName({ isEmbedded })
   const monthRailClassName = getMonthRailClassName({ isEmbedded })
-  const months = Array.from({ length: 12 }, (_, index) => index)
+  const contentClassName = getContentClassName({ showMonthRail })
+  const months = visibleMonths
   const activeMonth = useStore($activeMonth)
   const isSyncing = useStore($isSyncingEvents)
 
   useEffect(() => {
+    if (months.length < 2) return
+
     const currentYear = new Date().getFullYear()
     if (year !== currentYear) return
 
@@ -56,7 +69,7 @@ export function YearView({ year, events, daySize = DEFAULT_DAY_SIZE, layoutMode 
     const targetScrollTop = calculateScrollToTop(todayWeekElement, scrollContainer, headerHeight)
 
     scrollContainer.scrollTop = targetScrollTop
-  }, [year])
+  }, [year, months.length])
 
   function handleMonthClick(month: number) {
     const element = document.querySelector(`[data-month="${month}"]`)
@@ -72,36 +85,38 @@ export function YearView({ year, events, daySize = DEFAULT_DAY_SIZE, layoutMode 
   return (
     <div className={rootClassName}>
       {/* Fixed Month Sidebar - Right side, centered vertically */}
-      <Column className={monthRailClassName}>
-        {/* Sync indicator */}
-        {isSyncing && (
-          <Row className='absolute top-4 left-4 items-center gap-1.5 text-xs text-tertiary'>
-            <div className='w-2.5 h-2.5 border-2 border-tertiary border-t-transparent rounded-full animate-spin' />
-            <span>Syncing</span>
-          </Row>
-        )}
+      {showMonthRail && (
+        <Column className={monthRailClassName}>
+          {/* Sync indicator */}
+          {isSyncing && (
+            <Row className='absolute top-4 left-4 items-center gap-1.5 text-xs text-tertiary'>
+              <div className='w-2.5 h-2.5 border-2 border-tertiary border-t-transparent rounded-full animate-spin' />
+              <span>Syncing</span>
+            </Row>
+          )}
 
-        {months.map((month) => {
-          const isActive = month === activeMonth
+          {months.map((month) => {
+            const isActive = month === activeMonth
 
-          return (
-            <button
-              key={month}
-              onClick={() => handleMonthClick(month)}
-              className={`text-left pl-4 py-0.5 text-3xl font-medium transition-all duration-200 cursor-pointer hover:text-month-nav-inactive ${
-                isActive ? 'text-brand-red font-bold' : 'text-month-nav-inactive'
-              }`}
-            >
-              {getMonthName(month)}
-            </button>
-          )
-        })}
-      </Column>
+            return (
+              <button
+                key={month}
+                onClick={() => handleMonthClick(month)}
+                className={`text-left pl-4 py-0.5 text-3xl font-medium transition-all duration-200 cursor-pointer hover:text-month-nav-inactive ${
+                  isActive ? 'text-brand-red font-bold' : 'text-month-nav-inactive'
+                }`}
+              >
+                {getMonthName(month)}
+              </button>
+            )
+          })}
+        </Column>
+      )}
 
-      <WeekdayHeader variant='year-view' daySize={daySize} />
+      <WeekdayHeader variant='year-view' daySize={daySize} showMonthRail={showMonthRail} />
 
       {/* Main content area - centered */}
-      <Column className='mr-28 items-center'>
+      <Column className={contentClassName}>
         {/* Months Grid - Centered */}
         <div className='space-y-2 py-6'>
           {months.map((month) => (
@@ -126,6 +141,12 @@ function getMonthRailClassName(props: { isEmbedded: boolean }) {
   }
 
   return 'fixed right-0 top-10 bottom-0 w-28 justify-center z-10'
+}
+
+function getContentClassName(props: { showMonthRail: boolean }) {
+  const { showMonthRail } = props
+  if (showMonthRail) return 'mr-28 items-center'
+  return 'items-center'
 }
 
 function smoothScrollTo(element: Element, targetPosition: number, duration: number) {

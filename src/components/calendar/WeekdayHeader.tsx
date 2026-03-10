@@ -7,6 +7,7 @@ const TODAY_DAY_OF_WEEK = getDayOfWeek(new Date())
 type YearViewHeaderProps = {
   variant: 'year-view'
   daySize: number
+  showMonthRail?: boolean
 }
 
 type LinearViewHeaderProps = {
@@ -18,16 +19,19 @@ type WeekdayHeaderProps = YearViewHeaderProps | LinearViewHeaderProps
 
 export function WeekdayHeader(props: WeekdayHeaderProps) {
   if (props.variant === 'year-view') {
-    return <YearViewWeekdayHeader daySize={props.daySize} />
+    return <YearViewWeekdayHeader daySize={props.daySize} showMonthRail={props.showMonthRail ?? true} />
   }
 
   return <LinearViewWeekdayHeader columns={props.columns} />
 }
 
-function YearViewWeekdayHeader({ daySize }: { daySize: number }) {
+function YearViewWeekdayHeader(props: { daySize: number; showMonthRail: boolean }) {
+  const { daySize, showMonthRail } = props
+  const rootClassName = showMonthRail ? 'justify-center mr-28' : 'justify-center'
+
   return (
     <div className='sticky top-0 z-30 bg-background-app border-b w-full' data-weekday-header='year-view'>
-      <Row className='justify-center mr-28'>
+      <Row className={rootClassName}>
         <Row className='items-center gap-12'>
           <div className='w-56' />
           <div className='grid grid-cols-7'>

@@ -41,57 +41,51 @@ const LANDING_TABS: LandingTabConfig[] = [
 ]
 
 const LANDING_PREVIEW_DAY_SIZE = 66
+const YEAR_PREVIEW_MONTH = 3
 
 const YEAR_PREVIEW_EVENT_IDS = [
+  'holiday-easter',
   'school-spring-break',
-  'tentative-spring-trip',
-  'trip-national-park-apr',
-  'work-offsite-q2',
-  'trip-coast-may',
-  'family-mothers-day',
-  'trip-memorial-lake',
-  'holiday-memorial',
-  'school-summer-break',
-  'work-summit-jun',
-  'trip-europe-summer',
-  'family-fathers-day',
-  'work-offsite-q3',
-  'trip-camping-aug',
-  'school-first-day',
+  'tentative-spring-break-trip',
+  'family-abuela-birthday',
+  'work-design-sprint',
 ]
 
 const LINEAR_PREVIEW_EVENT_IDS = [
-  'work-offsite-q1',
+  'holiday-new-years',
+  'work-offsite-austin',
   'holiday-mlk',
   'trip-presidents-weekend',
-  'family-birthday-kid',
-  'trip-wine-country',
-  'work-conference-mar',
+  'family-emma-birthday',
+  'visit-genevieve-costa-rica',
+  'trip-austin-wedding',
   'school-spring-break',
-  'tentative-spring-trip',
-  'trip-national-park-apr',
-  'work-offsite-q2',
-  'trip-coast-may',
-  'family-mothers-day',
-  'trip-europe-summer',
+  'tentative-spring-break-trip',
+  'work-design-sprint',
+  'trip-big-sur-car',
+  'trip-montreal-grand-prix',
+  'work-company-summit',
+  'trip-italy-summer',
   'holiday-july4',
-  'trip-camping-aug',
-  'trip-labor-beach',
-  'work-training-sep',
+  'family-reunion',
+  'visit-parents-labor-day',
+  'holiday-labor',
   'family-anniversary',
-  'trip-fall-foliage',
-  'work-offsite-q4',
-  'holiday-thanksgiving',
+  'trip-fall-foliage-car',
+  'work-offsite-nyc',
+  'school-thanksgiving-break',
   'trip-thanksgiving-family',
   'holiday-christmas',
   'trip-ski-christmas',
 ]
 
 const TRIPS_PREVIEW_EVENT_IDS = [
-  'tentative-spring-trip',
-  'trip-coast-may',
-  'trip-europe-summer',
-  'trip-camping-aug',
+  'visit-genevieve-costa-rica',
+  'trip-austin-wedding',
+  'tentative-spring-break-trip',
+  'trip-big-sur-car',
+  'trip-montreal-grand-prix',
+  'trip-italy-summer',
   'trip-ski-christmas',
 ]
 
@@ -99,7 +93,7 @@ const MAGIC_ITEMS = [
   {
     title: 'Tentative plans',
     description: 'Add a question mark (?) anywhere in the title and those days are highlighted automatically.',
-    example: 'Spring Break Trip (Maybe)',
+    example: 'Kyoto Spring Break Trip?',
     icon: CircleHelp,
   },
   {
@@ -111,13 +105,13 @@ const MAGIC_ITEMS = [
   {
     title: 'Trips and visits',
     description: 'Trip and Visit titles become dedicated trip cards with travel context.',
-    example: 'Europe Trip - Italy & France',
+    example: 'Austin Suzanne\'s Wedding Trip',
     icon: PlaneLanding,
   },
   {
     title: 'Cross-calendar story',
     description: 'School breaks, work trips, holidays, and family plans line up in one year-wide timeline.',
-    example: 'Spring Break + team offsite + Yosemite Weekend',
+    example: 'Spring Break + Kyoto Trip? + NYC design sprint',
     icon: Plane,
   },
 ] as const
@@ -128,6 +122,7 @@ const tripsPreviewEvents = pickEvents(TRIPS_PREVIEW_EVENT_IDS)
 export function LandingDemoTabs() {
   const [activeTab, setActiveTab] = useState<LandingTab>('year')
   const previewYear = getPreviewYearFromDemoEvents(demoEvents)
+  const panelClassName = getPanelClassName(activeTab)
 
   return (
     <Column className='rounded-xl overflow-hidden shadow-2xl bg-white'>
@@ -150,7 +145,7 @@ export function LandingDemoTabs() {
         })}
       </Row>
 
-      <div className='relative h-[620px] overflow-auto bg-background-app'>
+      <div className={panelClassName}>
         <LandingTabPanel activeTab={activeTab} previewYear={previewYear} />
       </div>
     </Column>
@@ -168,7 +163,14 @@ function LandingTabPanel(props: LandingTabPanelProps) {
   if (activeTab === 'year') {
     return (
       <div className='pointer-events-none'>
-        <YearView year={previewYear} events={yearPreviewEvents} daySize={LANDING_PREVIEW_DAY_SIZE} layoutMode='embedded' />
+        <YearView
+          year={previewYear}
+          events={yearPreviewEvents}
+          daySize={LANDING_PREVIEW_DAY_SIZE}
+          layoutMode='embedded'
+          visibleMonths={[YEAR_PREVIEW_MONTH]}
+          showMonthRail={false}
+        />
       </div>
     )
   }
@@ -231,4 +233,12 @@ function pickEvents(ids: string[]): CalendarEvent[] {
   const idSet = new Set(ids)
   const result = demoEvents.filter((event) => idSet.has(event.id))
   return result
+}
+
+function getPanelClassName(activeTab: LandingTab) {
+  if (activeTab === 'year') {
+    return 'relative overflow-hidden bg-background-app'
+  }
+
+  return 'relative h-[620px] overflow-auto bg-background-app'
 }

@@ -409,6 +409,15 @@ export const demoEvents: CalendarEvent[] = [
     calendarId: PERSONAL_CAL_ID,
   },
   {
+    id: 'family-abuela-birthday',
+    summary: 'Abuela Birthday Dinner',
+    startDate: '2026-04-18',
+    endDate: '2026-04-19',
+    colorId: '4',
+    status: 'confirmed',
+    calendarId: PERSONAL_CAL_ID,
+  },
+  {
     id: 'family-mothers-day',
     summary: "Mother's Day Brunch",
     startDate: '2026-05-10',

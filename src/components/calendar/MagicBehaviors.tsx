@@ -26,7 +26,7 @@ const BEHAVIORS: Behavior[] = [
     icon: CircleHelp,
     title: 'Tentative Events',
     description: 'Add a question mark (?) anywhere in your event title to mark it as tentative.',
-    example: 'Trip to Paris?',
+    example: 'Kyoto Spring Break Trip?',
     result: 'The day cells for that event will have a yellow background, making it easy to spot plans that are not yet confirmed.',
   },
   {
@@ -42,7 +42,7 @@ const BEHAVIORS: Behavior[] = [
     icon: Plane,
     title: 'Trips',
     description: 'Events with "Trip" in the title appear in a dedicated Trips tab, organized by upcoming and past.',
-    example: 'Trip to Japan',
+    example: "Austin Suzanne's Wedding Trip",
     sections: [
       {
         title: 'Trip States',
@@ -67,7 +67,7 @@ const BEHAVIORS: Behavior[] = [
     icon: PlaneLanding,
     title: 'Visits',
     description: 'Track when someone is visiting you by starting the event title with "Visit:".',
-    example: 'Visit: Mom & Dad',
+    example: 'Visit: Genevieve in Costa Rica',
     result: 'The event shows a landing plane icon, the days are highlighted with a colored pattern, and visits appear in the Trips & Visits tab alongside your trips.',
   },
 ]
